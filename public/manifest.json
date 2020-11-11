@@ -1,7 +1,28 @@
 {
-  "name": "Layer Styles",
+  "name": "Test Plugin",
   "id": "795096273369409539",
   "api": "1.0.0",
   "main": "code.js",
-  "ui": "index.html"
+  "ui": "index.html",
+  "menu": [
+    {
+      "name": "Show Styles",
+      "command": "showStyles"
+    },
+    {
+      "name": "Create Styles",
+      "command": "createStyles"
+    },
+    {
+      "name": "Update Styles",
+      "command": "updateStyles"
+    },
+    {
+      "name": "Clear Styles",
+      "command": "clearStyles"
+    }
+  ],
+  "relaunchButtons": [
+    {"command": "updateStyles", "name": "Update Styles", "multipleSelection": true}
+  ]
 }

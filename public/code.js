@@ -1,31 +1,7 @@
 'use strict';
 
-/*! *****************************************************************************
-Copyright (c) Microsoft Corporation. All rights reserved.
-Licensed under the Apache License, Version 2.0 (the "License"); you may not use
-this file except in compliance with the License. You may obtain a copy of the
-License at http://www.apache.org/licenses/LICENSE-2.0
-
-THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
-WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
-MERCHANTABLITY OR NON-INFRINGEMENT.
-
-See the Apache Version 2.0 License for specific language governing permissions
-and limitations under the License.
-***************************************************************************** */
-
-function __awaiter(thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-}
-
 // This plugin will open a modal to prompt the user to enter a number, and
+// it will then create that many rectangles on the screen.
 // This file holds the main code for the plugins. It has access to the *document*.
 // You can access browser APIs in the <script> tag inside "ui.html" which has a
 // full browser enviroment (see documentation).
@@ -34,7 +10,6 @@ function clone(val) {
 }
 function copyStyles(source) {
     var styles = {};
-    styles.name = source.name;
     if (source.fillStyleId == "") {
         styles.fills = source.fills;
     }
@@ -67,77 +42,165 @@ function copyStyles(source) {
     console.log(styles);
     return styles;
 }
-function setStyle(object) {
-    return __awaiter(this, void 0, void 0, function* () {
-        var styles = yield figma.clientStorage.getAsync("styles");
-        if (styles) {
-            console.log("Getting styles");
+function addStyle(node) {
+    var styles = figma.root.getPluginData("styles");
+    if (styles !== "") {
+        console.log("Getting styles");
+        styles = JSON.parse(styles);
+    }
+    else {
+        styles = [];
+    }
+    styles.push({ id: node.id, node: copyStyles(node), name: node.name });
+    figma.root.setPluginData("styles", JSON.stringify(styles));
+}
+function updateStyle(id, name) {
+    var styles = getStyles();
+    styles.map((obj) => {
+        if (obj.id == id) {
+            obj.name = name;
         }
-        else {
-            styles = [];
-        }
-        styles.push(object);
-        yield figma.clientStorage.setAsync("styles", styles);
     });
+    figma.root.setPluginData("styles", JSON.stringify(styles));
 }
 function getStyles() {
-    return __awaiter(this, void 0, void 0, function* () {
-        var styles = yield figma.clientStorage.getAsync("styles");
-        return styles;
-    });
+    var styles = figma.root.getPluginData("styles");
+    console.log("Getting styles");
+    if (styles !== "") {
+        styles = JSON.parse(styles);
+    }
+    else {
+        styles = [];
+    }
+    return styles;
 }
-// This shows the HTML page in "ui.html".
-figma.showUI(__html__, { width: 232, height: 208 });
-(function () {
-    return __awaiter(this, void 0, void 0, function* () {
-        var styles = yield getStyles();
-        var message = styles;
-        figma.ui.postMessage(message);
-    });
-})();
-// Calls to "parent.postMessage" from within the HTML page will trigger this
-// callback. The callback will be passed the "pluginMessage" property of the
-// posted message.
-figma.ui.onmessage = msg => {
-    // One way of distinguishing between different types of messages sent from
-    // your HTML page is to use an object with a "type" property like this.
-    if (msg.type === 'create-shapes') {
-        const nodes = [];
-        for (let i = 0; i < msg.count; i++) {
-            var shape;
-            if (msg.shape === 'rectangle') {
-                shape = figma.createRectangle();
-            }
-            else if (msg.shape === 'triangle') {
-                shape = figma.createPolygon();
-            }
-            else {
-                shape = figma.createEllipse();
-            }
-            shape.x = i * 150;
-            shape.fills = [{ type: 'SOLID', color: { r: 1, g: 0.5, b: 0 } }];
-            figma.currentPage.appendChild(shape);
-            nodes.push(shape);
+function pasteStyles(target, styles) {
+    Object.assign(target, styles);
+    return target;
+}
+function updateStyles(selection, id) {
+    var nodes;
+    if (selection) {
+        nodes = selection;
+    }
+    if (id) {
+        var pages = figma.root.children;
+        for (let i = 0; i < pages.length; i++) {
+            nodes = pages[i].findAll(node => node.getPluginData("styleId") === id);
         }
-        figma.currentPage.selection = nodes;
-        figma.viewport.scrollAndZoomIntoView(nodes);
-        figma.closePlugin();
+        // nodes = [figma.getNodeById(id)]
     }
-    function pasteStyles(target, styles) {
-        Object.assign(target, styles);
-        return target;
+    for (let i = 0; i < nodes.length; i++) {
+        var node = nodes[i];
+        var styleId = node.getPluginData("styleId");
+        // Look for node with matching styleID
+        var source = figma.getNodeById(styleId);
+        var styles = copyStyles(source);
+        pasteStyles(node, styles);
     }
-    if (msg.type === "copy-styles") {
-        var styles = copyStyles(figma.currentPage.selection[0]);
-        var target = pasteStyles(figma.createFrame(), styles);
-        figma.viewport.scrollAndZoomIntoView([target]);
-        (function () {
-            return __awaiter(this, void 0, void 0, function* () {
-                yield setStyle(styles);
-                yield getStyles();
-            });
-        })();
+    // figma.closePlugin()
+}
+function clearStyles() {
+    figma.root.setPluginData("styles", "");
+    console.log("Styles cleared");
+    figma.closePlugin();
+}
+function createStyles(selection) {
+    var node = selection[0];
+    node.setPluginData("styleId", node.id);
+    // var target = pasteStyles(figma.createFrame(), styles)
+    node.setRelaunchData({ updateStyles: 'Update from component styles' });
+    // figma.viewport.scrollAndZoomIntoView([target]);
+    addStyle(node);
+}
+function postMessage() {
+    var styles = getStyles();
+    var message = styles;
+    console.log("Posted message");
+    figma.ui.postMessage(message);
+}
+function applyStyle(selection, styleId) {
+    for (let i = 0; i < selection.length; i++) {
+        var node = selection[i];
+        node.setPluginData("styleId", styleId);
+        // var styleId = node.getPluginData("styleId")
+        // Look for node with matching styleID
+        var source = figma.getNodeById(styleId);
+        var styles = copyStyles(source);
+        pasteStyles(node, styles);
     }
-    // Make sure to close the plugin when you're done. Otherwise the plugin will
-    // keep running, which shows the cancel button at the bottom of the screen.
-};
+}
+function removeStyle(styleId) {
+    var styles = getStyles();
+    styles.splice(styles.findIndex(function (i) {
+        return i.id === "styleId";
+    }), 1);
+    figma.root.setPluginData("styles", JSON.stringify(styles));
+}
+if (figma.command === "showStyles") {
+    // This shows the HTML page in "ui.html".
+    figma.showUI(__html__, { width: 232, height: 360 });
+    postMessage();
+    // Calls to "parent.postMessage" from within the HTML page will trigger this
+    // callback. The callback will be passed the "pluginMessage" property of the
+    // posted message.
+    figma.ui.onmessage = msg => {
+        // One way of distinguishing between different types of messages sent from
+        // your HTML page is to use an object with a "type" property like this.
+        if (msg.type === 'create-shapes') {
+            const nodes = [];
+            for (let i = 0; i < msg.count; i++) {
+                var shape;
+                if (msg.shape === 'rectangle') {
+                    shape = figma.createRectangle();
+                }
+                else if (msg.shape === 'triangle') {
+                    shape = figma.createPolygon();
+                }
+                else {
+                    shape = figma.createEllipse();
+                }
+                shape.x = i * 150;
+                shape.fills = [{ type: 'SOLID', color: { r: 1, g: 0.5, b: 0 } }];
+                figma.currentPage.appendChild(shape);
+                nodes.push(shape);
+            }
+            figma.currentPage.selection = nodes;
+            figma.viewport.scrollAndZoomIntoView(nodes);
+            figma.closePlugin();
+        }
+        if (msg.type === "add-style") {
+            createStyles(figma.currentPage.selection);
+            postMessage();
+        }
+        if (msg.type === "rename-style") {
+            updateStyle(msg.id, msg.name);
+            postMessage();
+        }
+        if (msg.type === "update-instances") {
+            console.log(msg.id);
+            var node = figma.getNodeById;
+            updateStyles(figma.currentPage.selection, msg.id);
+        }
+        if (msg.type === "apply-style") {
+            applyStyle(figma.currentPage.selection, msg.id);
+        }
+        if (msg.type === "remove-style") {
+            removeStyle(msg.id);
+            postMessage();
+        }
+        // Make sure to close the plugin when you're done. Otherwise the plugin will
+        // keep running, which shows the cancel button at the bottom of the screen.
+    };
+}
+if (figma.command === "createStyles") {
+    createStyles(figma.currentPage.selection);
+    figma.closePlugin();
+}
+if (figma.command === "updateStyles") {
+    updateStyles(figma.currentPage.selection);
+}
+if (figma.command === "clearStyles") {
+    clearStyles();
+}
+//# sourceMappingURL=code.js.map

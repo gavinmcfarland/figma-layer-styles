@@ -4,7 +4,14 @@
 	import { GlobalCSS } from "figma-plugin-ds-svelte";
 
 	//import some Svelte Figma UI components
-	import { Button, Input, Label, SelectMenu } from "figma-plugin-ds-svelte";
+	import {
+		Button,
+		Input,
+		Label,
+		SelectMenu,
+		Type,
+	} from "figma-plugin-ds-svelte";
+	import { onMount } from "svelte";
 
 	//menu items, this is an array of objects to populate to our select menus
 	let menuItems = [
@@ -39,11 +46,60 @@
 		);
 	}
 
-	function copyStyles() {
+	function addStyle() {
 		parent.postMessage(
 			{
 				pluginMessage: {
-					type: "copy-styles",
+					type: "add-style",
+				},
+			},
+			"*"
+		);
+	}
+
+	function updateInstances(id) {
+		parent.postMessage(
+			{
+				pluginMessage: {
+					type: "update-instances",
+					id,
+				},
+			},
+			"*"
+		);
+	}
+
+	function applyStyle(id) {
+		parent.postMessage(
+			{
+				pluginMessage: {
+					type: "apply-style",
+					id,
+				},
+			},
+			"*"
+		);
+	}
+
+	function removeStyle(id) {
+		parent.postMessage(
+			{
+				pluginMessage: {
+					type: "remove-style",
+					id,
+				},
+			},
+			"*"
+		);
+	}
+
+	function renameStyle(id, name) {
+		parent.postMessage(
+			{
+				pluginMessage: {
+					type: "rename-style",
+					id,
+					name,
 				},
 			},
 			"*"
@@ -58,30 +114,43 @@
 
 	async function onLoad(event) {
 		styles = await event.data.pluginMessage;
-		console.log(styles);
+		// console.log(styles);
 	}
 </script>
 
 <style>
 	/* Add additional global or scoped styles here */
+	:global(.bb) {
+		border-bottom: 1px solid var(--grey);
+	}
 </style>
 
 <svelte:window on:message={onLoad} />
+
+<!-- <div class="bt" style="display: hidden" /> -->
 <div class="wrapper p-xxsmall">
-	<Label>Shape</Label>
+	<!-- <Label>Shape</Label>
 	<SelectMenu bind:menuItems bind:value={selectedShape} class="mb-xxsmall" />
 
 	<Label>Count</Label>
-	<Input iconText="#" bind:value={count} class="mb-xxsmall" />
-	{#each styles as style}
-		<div>{style.name}</div>
-	{/each}
+	<Input iconText="#" bind:value={count} class="mb-xxsmall" /> -->
+	<div style="margin-left: -8px; margin-right: -8px;">
+		{#each styles as style}
+			<Type class="p-xsmall bb">
+				{style.name}
+				<a on:click={renameStyle(style.id, 'test')}>Rename</a>
+				<a on:click={applyStyle(style.id)}>Apply</a>
+				<a on:click={updateInstances(style.id)}>Resync</a>
+				<a on:click={removeStyle(style.id)}>Remove</a>
+			</Type>
+		{/each}
+	</div>
 
 	<div class="flex p-xxsmall mb-xsmall">
-		<Button on:click={cancel} variant="secondary" class="mr-xsmall">
+		<!-- <Button on:click={cancel} variant="secondary" class="mr-xsmall">
 			Cancel
-		</Button>
+		</Button> -->
 		<!-- <Button on:click={createShapes} bind:disabled>Create shapes</Button> -->
-		<Button on:click={copyStyles}>Copy styles</Button>
+		<Button on:click={addStyle}>Add style</Button>
 	</div>
 </div>
