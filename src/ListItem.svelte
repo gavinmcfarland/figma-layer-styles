@@ -1,5 +1,6 @@
 <script>
     import { fade } from "svelte/transition";
+    import { afterUpdate } from "svelte";
 
     import {
         Input,
@@ -12,6 +13,10 @@
     // ListItem
 
     export let style;
+    let listItem;
+    let menu;
+    let more;
+    let field;
 
     let styleBeingEdited = {
         name: "",
@@ -69,10 +74,6 @@
     function editStyle(event, style) {
         styleBeingEdited = style;
 
-        console.log(style);
-
-        console.log(event.currentTarget.parentNode.parentNode.parentNode);
-        var listItem = event.currentTarget.parentNode.parentNode.parentNode;
         var editName = listItem.querySelector(".editName");
         var input = listItem.querySelector("input");
         editName.classList.add("show");
@@ -92,35 +93,26 @@
         console.log(input);
     }
 
-    function openMenu(event) {
-        var menu = event.currentTarget.getElementsByClassName("menu");
-        menu[0].classList.toggle("show");
+    function openMenu(event, style) {
+        menu.classList.toggle("show");
     }
 
-    function closeMenu(event) {
-        var menu = event.currentTarget.getElementsByClassName("more");
-        for (let i = 0; i < menu.length; i++) {
-            menu[i].children[1].classList.remove("show");
-        }
+    function closeMenu(event, style) {
+        more.children[1].classList.remove("show");
 
-        var editInputs = event.currentTarget.getElementsByClassName("editName");
-        for (let i = 0; i < editInputs.length; i++) {
-            editInputs[i].classList.remove("show");
-        }
+        // var editInputs = event.currentTarget.getElementsByClassName("editName");
+        // for (let i = 0; i < editInputs.length; i++) {
+        field.classList.remove("show");
+        // }
     }
 
     function onPageClick(e) {
-        var menu = e.currentTarget.getElementsByClassName("more");
-
-        for (let i = 0; i < menu.length; i++) {
-            // TOTO: need to include/exclude input
-            if (e.target === menu[i] || menu[i].contains(e.target)) {
-                return;
-            }
+        if (e.target === more || more.contains(e.target)) {
+            return;
         }
 
         console.log("Clicked outside");
-        closeMenu(e);
+        closeMenu(e, style);
     }
 </script>
 
@@ -172,23 +164,34 @@
         top: 0;
         left: 0;
     }
+
+    #listItem {
+        color: red;
+    }
 </style>
 
-<Type class="list-item pl-xsmall pr-xxsmall flex place-center">
-    <div class="editName pl-xxsmall" transition:fade={{ duration: 100 }}>
-        <Input bind:value={styleBeingEdited.name} class="mb-xxsmall" />
-    </div>
-    <span style="flex-grow: 1;">{style.name}</span>
-    <IconButton on:click={updateInstances(style.id)} iconName={IconSwap} />
-    <!-- <IconButton on:click={removeStyle(style.id)} iconName={IconMinus} /> -->
-    <span on:click={openMenu} class="more">
-        <IconButton iconName={IconEllipses} />
-        <div class="menu">
-            <div class="triangle" />
-            <a on:click={applyStyle(style.id)}>Apply</a>
-            <!-- <a on:click={renameStyle(style.id, 'test')}>Rename</a> -->
-            <a on:click={editStyle(event, style)}>Rename</a>
-            <a on:click={removeStyle(style.id)}>Delete</a>
+<svelte:body on:click={onPageClick} />
+
+<div id="listItem{style.id}" bind:this={listItem}>
+    <Type class="list-item pl-xsmall pr-xxsmall flex place-center">
+        <div
+            bind:this={field}
+            class="editName pl-xxsmall"
+            transition:fade={{ duration: 100 }}>
+            <Input bind:value={styleBeingEdited.name} class="mb-xxsmall" />
         </div>
-    </span>
-</Type>
+        <span style="flex-grow: 1;">{style.name}</span>
+        <IconButton on:click={updateInstances(style.id)} iconName={IconSwap} />
+        <!-- <IconButton on:click={removeStyle(style.id)} iconName={IconMinus} /> -->
+        <span on:click={openMenu(event, style)} class="more" bind:this={more}>
+            <IconButton iconName={IconEllipses} />
+            <div class="menu" bind:this={menu}>
+                <div class="triangle" />
+                <a on:click={applyStyle(style.id)}>Apply</a>
+                <!-- <a on:click={renameStyle(style.id, 'test')}>Rename</a> -->
+                <a on:click={editStyle(event, style)}>Rename</a>
+                <a on:click={removeStyle(style.id)}>Delete</a>
+            </div>
+        </span>
+    </Type>
+</div>

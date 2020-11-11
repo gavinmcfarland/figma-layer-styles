@@ -20,7 +20,7 @@
 	} from "figma-plugin-ds-svelte";
 	import { onMount } from "svelte";
 
-	import ListItem from "./ListItem.svelte";
+	import Styles from "./Styles.svelte";
 
 	//menu items, this is an array of objects to populate to our select menus
 	let menuItems = [
@@ -128,11 +128,7 @@
 
 	<Label>Count</Label>
 	<Input iconText="#" bind:value={count} class="mb-xxsmall" /> -->
-	<div style="margin-left: -8px; margin-right: -8px;">
-		{#each styles as style}
-			<ListItem {style} />
-		{/each}
-	</div>
+	<Styles {styles} />
 
 	<div class="action-bar flex p-xxsmall bt">
 		<!-- <Button on:click={cancel} variant="secondary" class="mr-xsmall">
