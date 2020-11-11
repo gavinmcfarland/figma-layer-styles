@@ -20,8 +20,9 @@
 	} from "figma-plugin-ds-svelte";
 	import { onMount } from "svelte";
 
-	let showRename = false;
-	let styleBeingEdited = null;
+	let styleBeingEdited = {
+		name: "",
+	};
 
 	//menu items, this is an array of objects to populate to our select menus
 	let menuItems = [
@@ -120,9 +121,30 @@
 		parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
 	}
 
-	function editStyle(style) {
-		showRename = true;
+	function editStyle(event, style) {
 		styleBeingEdited = style;
+
+		console.log(style);
+
+		console.log(event.currentTarget.parentNode.parentNode.parentNode);
+		var listItem = event.currentTarget.parentNode.parentNode.parentNode;
+		var editName = listItem.querySelector(".editName");
+		var input = listItem.querySelector("input");
+		editName.classList.add("show");
+		input.focus();
+		input.addEventListener("keyup", function (event) {
+			// Number 13 is the "Enter" key on the keyboard
+			if (event.keyCode === 13) {
+				// Cancel the default action, if needed
+				event.preventDefault();
+
+				renameStyle(styleBeingEdited.id, styleBeingEdited.name);
+				document.activeElement.blur();
+				// Trigger the button element with a click
+				// document.getElementById("myBtn").click();
+			}
+		});
+		console.log(input);
 	}
 
 	function openMenu(event) {
@@ -135,12 +157,18 @@
 		for (let i = 0; i < menu.length; i++) {
 			menu[i].children[1].classList.remove("show");
 		}
+
+		var editInputs = event.currentTarget.getElementsByClassName("editName");
+		for (let i = 0; i < editInputs.length; i++) {
+			editInputs[i].classList.remove("show");
+		}
 	}
 
 	function onPageClick(e) {
 		var menu = e.currentTarget.getElementsByClassName("more");
 
 		for (let i = 0; i < menu.length; i++) {
+			// TOTO: need to include/exclude input
 			if (e.target === menu[i] || menu[i].contains(e.target)) {
 				return;
 			}
@@ -237,63 +265,77 @@
 		top: -3px;
 		right: 10px;
 	}
+
+	.editName {
+		display: none;
+		position: absolute;
+		top: 0;
+		left: 0;
+	}
+
+	:global(.show) {
+		display: block !important;
+	}
 </style>
 
 <svelte:window on:message={onLoad} />
 
 <!-- <div class="bt" style="display: hidden" /> -->
-{#if !showRename}
-	<div
-		class="wrapper p-xxsmall"
-		transition:fade={{ duration: 100 }}
-		on:click={onPageClick}>
-		<!-- <Label>Shape</Label>
+
+<div
+	class="wrapper p-xxsmall"
+	transition:fade={{ duration: 100 }}
+	on:click={onPageClick}>
+	<!-- <Label>Shape</Label>
 	<SelectMenu bind:menuItems bind:value={selectedShape} class="mb-xxsmall" />
 
 	<Label>Count</Label>
 	<Input iconText="#" bind:value={count} class="mb-xxsmall" /> -->
-		<div style="margin-left: -8px; margin-right: -8px;">
-			{#each styles as style}
-				<Type class="list-item pl-xsmall pr-xxsmall flex place-center">
-					<span style="flex-grow: 1;">{style.name}</span>
-					<IconButton
-						on:click={updateInstances(style.id)}
-						iconName={IconSwap} />
-					<!-- <IconButton
+	<div style="margin-left: -8px; margin-right: -8px;">
+		{#each styles as style}
+			<Type class="list-item pl-xsmall pr-xxsmall flex place-center">
+				<div
+					class="editName pl-xxsmall"
+					transition:fade={{ duration: 100 }}>
+					<Input
+						bind:value={styleBeingEdited.name}
+						class="mb-xxsmall" />
+				</div>
+				<span style="flex-grow: 1;">{style.name}</span>
+				<IconButton
+					on:click={updateInstances(style.id)}
+					iconName={IconSwap} />
+				<!-- <IconButton
 					on:click={removeStyle(style.id)}
 					iconName={IconMinus} /> -->
-					<span
-						on:click={openMenu}
-						on:clickoutside={closeMenu}
-						class="more">
-						<IconButton iconName={IconEllipses} />
-						<div class="menu">
-							<div class="triangle" />
-							<a on:click={applyStyle(style.id)}>Apply</a>
-							<!-- <a on:click={renameStyle(style.id, 'test')}>Rename</a> -->
-							<a on:click={editStyle(style)}>Rename</a>
-							<a on:click={removeStyle(style.id)}>Delete</a>
-						</div>
-					</span>
-				</Type>
-			{/each}
-		</div>
+				<span on:click={openMenu} class="more">
+					<IconButton iconName={IconEllipses} />
+					<div class="menu">
+						<div class="triangle" />
+						<a on:click={applyStyle(style.id)}>Apply</a>
+						<!-- <a on:click={renameStyle(style.id, 'test')}>Rename</a> -->
+						<a on:click={editStyle(event, style)}>Rename</a>
+						<a on:click={removeStyle(style.id)}>Delete</a>
+					</div>
+				</span>
+			</Type>
+		{/each}
+	</div>
 
-		<div class="action-bar flex p-xxsmall bt">
-			<!-- <Button on:click={cancel} variant="secondary" class="mr-xsmall">
+	<div class="action-bar flex p-xxsmall bt">
+		<!-- <Button on:click={cancel} variant="secondary" class="mr-xsmall">
 			Cancel
 		</Button> -->
-			<!-- <Button on:click={createShapes} bind:disabled>Create shapes</Button> -->
-			<!-- <Button on:click={addStyle}>Add style</Button> -->
-			<IconButton
-				class="IconButton"
-				on:click={addStyle}
-				iconName={IconPlus} />
-		</div>
+		<!-- <Button on:click={createShapes} bind:disabled>Create shapes</Button> -->
+		<!-- <Button on:click={addStyle}>Add style</Button> -->
+		<IconButton
+			class="IconButton"
+			on:click={addStyle}
+			iconName={IconPlus} />
 	</div>
-{:else}
-	<div class="wrapper p-xxsmall" transition:fade={{ duration: 100 }}>
-		<Label>Style Name</Label>
+</div>
+<!-- {#if showRename}
+	<div class="editName wrapper p-xxsmall" transition:fade={{ duration: 100 }}>
 		<Input bind:value={styleBeingEdited.name} class="mb-xxsmall" />
 
 		<div class="action-bar flex p-xxsmall bt">
@@ -314,4 +356,4 @@
 			</Button>
 		</div>
 	</div>
-{/if}
+{/if} -->
