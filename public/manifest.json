@@ -1,6 +1,6 @@
 {
-  "name": "Test Plugin",
-  "id": "795096273369409539",
+  "name": "Layer Styles",
+  "id": "908303483495091267",
   "api": "1.0.0",
   "main": "code.js",
   "ui": "index.html",

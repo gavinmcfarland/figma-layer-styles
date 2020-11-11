@@ -133,13 +133,13 @@ function applyStyle(selection, styleId) {
 function removeStyle(styleId) {
     var styles = getStyles();
     styles.splice(styles.findIndex(function (i) {
-        return i.id === "styleId";
+        return i.id === styleId;
     }), 1);
     figma.root.setPluginData("styles", JSON.stringify(styles));
 }
 if (figma.command === "showStyles") {
     // This shows the HTML page in "ui.html".
-    figma.showUI(__html__, { width: 232, height: 360 });
+    figma.showUI(__html__, { width: 240, height: 360 });
     postMessage();
     // Calls to "parent.postMessage" from within the HTML page will trigger this
     // callback. The callback will be passed the "pluginMessage" property of the
@@ -203,4 +203,3 @@ if (figma.command === "updateStyles") {
 if (figma.command === "clearStyles") {
     clearStyles();
 }
-//# sourceMappingURL=code.js.map
