@@ -12,19 +12,26 @@ function clone(val) {
 function copyStyles(source) {
 	var styles = {}
 
-	if (source.fillStyleId == "") {
-		styles.fills = source.fills
-	}
-	else {
-		styles.fillStyleId = source.fillStyleId
-	}
+	// if (source.fillStyleId == "") {
+	// 	styles.fills = source.fills
+	// }
+	// else {
+	// 	styles.fillStyleId = source.fillStyleId
+	// 	styles.fills = source.fills
+	// }
 
-	if (source.strokeStyleId == "") {
-		styles.strokes = source.strokes
-	}
-	else {
-		styles.strokeStyleId = source.strokeStyleId
-	}
+	// if (source.strokeStyleId == "") {
+	// 	styles.strokes = source.strokes
+	// }
+	// else {
+	// 	styles.strokeStyleId = source.strokeStyleId
+	// 	styles.strokes = source.strokes
+	// }
+
+	styles.strokeStyleId = source.strokeStyleId
+	styles.strokes = source.strokes
+	styles.fillStyleId = source.fillStyleId
+	styles.fills = source.fills
 
 
 	styles.strokeWeight = source.strokeWeight
@@ -100,8 +107,21 @@ function getStyles() {
 	return styles
 }
 
-function pasteStyles(target, styles) {
-	Object.assign(target, styles)
+function pasteProperties(target, properties) {
+
+	// Remove strokes and fills if stroke or fill layer style detected (otherwise figma detaches them)
+	for (let i = 0; i < properties.length; i++) {
+		var property = properties[i]
+		if (property.fillStyleId !== "") {
+			delete property.fills
+		}
+
+		if (property.strokeStyleId !== "") {
+			delete property.strokes
+		}
+	}
+
+	Object.assign(target, properties)
 
 	return target
 }
@@ -129,7 +149,7 @@ function updateStyles(selection, id?) {
 		// Look for node with matching styleID
 		var source = figma.getNodeById(styleId)
 		var styles = copyStyles(source)
-		pasteStyles(node, styles)
+		pasteProperties(node, styles)
 	}
 
 	// figma.closePlugin()
@@ -145,7 +165,7 @@ function clearStyles() {
 function createStyles(selection) {
 	var node = selection[0]
 	node.setPluginData("styleId", node.id)
-	// var target = pasteStyles(figma.createFrame(), styles)
+	// var target = pasteProperties(figma.createFrame(), styles)
 	node.setRelaunchData({ updateStyles: 'Update from component styles' });
 	// figma.viewport.scrollAndZoomIntoView([target]);
 	addStyle(node)
@@ -168,7 +188,7 @@ function applyStyle(selection, styleId) {
 		// Look for node with matching styleID
 		var source = figma.getNodeById(styleId)
 		var styles = copyStyles(source)
-		pasteStyles(node, styles)
+		pasteProperties(node, styles)
 	}
 }
 

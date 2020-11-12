@@ -16,6 +16,49 @@
     let listItem;
     let menu;
 
+    function styleCss(style) {
+        var string = "";
+        var border = "";
+        var background = "";
+        var backgroundRgba = "";
+        var borderRgba = "";
+        var borderWeight = "";
+        var borderRadius = "";
+
+        if (style.node.strokes) {
+            borderRgba = `rgba(${style.node.strokes[0].color.r * 255}, ${
+                style.node.strokes[0].color.g * 255
+            }, ${style.node.strokes[0].color.b * 255}, ${
+                style.node.strokes[0].opacity
+            })`;
+            borderWeight = `${style.node.strokeWeight / 2}px`;
+            border = `border: ${borderWeight} solid ${borderRgba};`;
+        }
+
+        if (style.node.fills) {
+            backgroundRgba = `rgba(${style.node.fills[0].color.r * 255}, ${
+                style.node.fills[0].color.g * 255
+            }, ${style.node.fills[0].color.b * 255}, ${
+                style.node.fills[0].opacity
+            })`;
+            background = `background-color: ${backgroundRgba};`;
+        }
+
+        if (
+            style.node.cornerRadius ||
+            style.node.bottomLeftRadius ||
+            style.node.bottomRightRadius ||
+            style.node.topRightRadius ||
+            style.node.topLeftRadius
+        ) {
+            borderRadius = `border-radius: ${style.node.bottomLeftRadius}px`;
+        }
+
+        string = `${background} ${border} ${borderRadius}`;
+
+        return string;
+    }
+
     let field;
 
     let mousePosX;
@@ -148,6 +191,11 @@
         hideInput();
         closeMenu();
     }
+
+    window.addEventListener("blur", () => {
+        hideInput();
+        closeMenu();
+    });
 </script>
 
 <style>
@@ -176,6 +224,7 @@
         padding-right: 16px;
         position: relative;
         display: block;
+        user-select: none;
     }
 
     .menu > span:hover {
@@ -209,13 +258,14 @@
     }
 
     .layer-icon {
-        border: 1px solid #dcdcdc;
-        background: #f3f3f3;
-        border-radius: 999px;
+        /* border: 1px solid #dcdcdc; */
+        /* background: #f3f3f3; */
+        /* border-radius: 999px; */
         width: 18px;
         height: 18px;
         margin-right: 8px;
     }
+
     .field {
         position: relative;
     }
@@ -228,7 +278,7 @@
     bind:this={listItem}
     on:contextmenu={openMenu(event, style)}>
     <Type class="pl-xsmall pr-xxsmall flex place-center">
-        <span class="layer-icon" />
+        <span class="layer-icon" style={styleCss(style)} />
         <div class="field flex place-center" style="flex-grow: 1;">
             <div
                 bind:this={field}
@@ -242,14 +292,12 @@
                 iconName={IconSwap} />
         </div>
 
-        <!-- <IconButton on:click={removeStyle(style.id)} iconName={IconMinus} /> -->
-
-        <!-- <IconButton iconName={IconEllipses} /> -->
         <div
             class="menu"
             bind:this={menu}
             style="left: {mousePosX}; top: {mousePosY}">
             <div class="triangle" />
+            {console.log(style.node)}
             <span on:click={applyStyle(style.id)}>Apply</span>
             <!-- <a on:click={renameStyle(style.id, 'test')}>Rename</a> -->
             <span on:click={editStyle(event, style)}>Rename</span>
