@@ -10,20 +10,6 @@ function clone(val) {
 }
 function copyStyles(source) {
     var styles = {};
-    // if (source.fillStyleId == "") {
-    // 	styles.fills = source.fills
-    // }
-    // else {
-    // 	styles.fillStyleId = source.fillStyleId
-    // 	styles.fills = source.fills
-    // }
-    // if (source.strokeStyleId == "") {
-    // 	styles.strokes = source.strokes
-    // }
-    // else {
-    // 	styles.strokeStyleId = source.strokeStyleId
-    // 	styles.strokes = source.strokes
-    // }
     styles.strokeStyleId = source.strokeStyleId;
     styles.strokes = source.strokes;
     styles.fillStyleId = source.fillStyleId;
@@ -34,10 +20,19 @@ function copyStyles(source) {
     styles.strokeJoin = source.strokeJoin;
     styles.strokeMiterLimit = source.strokeMiterLimit;
     if (styles.type !== "INSTANCE") {
-        styles.topLeftRadius = source.topLeftRadius;
-        styles.topRightRadius = source.topRightRadius;
-        styles.bottomLeftRadius = source.bottomLeftRadius;
-        styles.bottomRightRadius = source.bottomRightRadius;
+        // styles.topLeftRadius = source.topLeftRadius
+        // styles.topRightRadius = source.topRightRadius
+        // styles.bottomLeftRadius = source.bottomLeftRadius
+        // styles.bottomRightRadius = source.bottomRightRadius
+        if (source.cornerRadius === figma.mixed) {
+            styles.topLeftRadius = source.topLeftRadius;
+            styles.topRightRadius = source.topRightRadius;
+            styles.bottomLeftRadius = source.bottomLeftRadius;
+            styles.bottomRightRadius = source.bottomRightRadius;
+        }
+        else {
+            styles.cornerRadius = source.cornerRadius;
+        }
     }
     styles.dashPattern = source.dashPattern;
     styles.clipsContent = source.clipsContent;
@@ -60,11 +55,16 @@ function addStyle(node) {
     styles.push({ id: node.id, node: copyStyles(node), name: node.name });
     figma.root.setPluginData("styles", JSON.stringify(styles));
 }
-function updateStyle(id, name) {
+function updateStyle(id, name, properties) {
     var styles = getStyles();
     styles.map((obj) => {
         if (obj.id == id) {
-            obj.name = name;
+            if (name) {
+                obj.name = name;
+            }
+            if (properties) {
+                obj.node = properties;
+            }
         }
     });
     figma.root.setPluginData("styles", JSON.stringify(styles));
@@ -84,6 +84,7 @@ function getStyles(id) {
         });
         styles = newStyles[0];
     }
+    console.log(styles);
     return styles;
 }
 function pasteProperties(target, properties) {
@@ -127,6 +128,7 @@ function updateStyles(selection, id) {
         var source = figma.getNodeById(styleId);
         if (source) {
             var layerStyle = copyStyles(source);
+            updateStyle(styleId, null, layerStyle);
             pasteProperties(node, layerStyle);
         }
         else {

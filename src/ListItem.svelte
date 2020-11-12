@@ -1,4 +1,6 @@
 <script>
+    import { loop_guard } from "svelte/internal";
+
     import { fade } from "svelte/transition";
     import { afterUpdate } from "svelte";
 
@@ -31,7 +33,7 @@
             }, ${style.node.strokes[0].color.b * 255}, ${
                 style.node.strokes[0].opacity
             })`;
-            borderWeight = `${style.node.strokeWeight / 2}px`;
+            borderWeight = `${style.node.strokeWeight / 4}px`;
             border = `border: ${borderWeight} solid ${borderRgba};`;
         }
 
@@ -44,14 +46,14 @@
             background = `background-color: ${backgroundRgba};`;
         }
 
-        if (
-            style.node.cornerRadius ||
-            style.node.bottomLeftRadius ||
-            style.node.bottomRightRadius ||
-            style.node.topRightRadius ||
-            style.node.topLeftRadius
-        ) {
-            borderRadius = `border-radius: ${style.node.bottomLeftRadius}px`;
+        if (style.node.cornerRadius) {
+            borderRadius = `border-radius: ${style.node.cornerRadius / 4}px`;
+        } else {
+            borderRadius = `border-radius: ${style.node.topLeftRadius / 4}px ${
+                style.node.topRightRadius / 4
+            }px ${style.node.bottomRightRadius / 4}px ${
+                style.node.bottomLeftRadius / 4
+            }px`;
         }
 
         string = `${background} ${border} ${borderRadius}`;
