@@ -90,7 +90,6 @@
 	}
 	:global(.list-item) {
 		height: 32px;
-		position: relative;
 	}
 
 	.action-bar {

@@ -15,8 +15,11 @@
     export let style;
     let listItem;
     let menu;
-    let more;
+
     let field;
+
+    let mousePosX;
+    let mousePosY;
 
     let styleBeingEdited = {
         name: "",
@@ -44,6 +47,7 @@
             },
             "*"
         );
+        closeMenu();
     }
 
     function removeStyle(id) {
@@ -77,7 +81,16 @@
         var editName = listItem.querySelector(".editName");
         var input = listItem.querySelector("input");
         editName.classList.add("show");
+        var focusedElement;
+
         input.focus();
+        // input.addEventListener("focus", () => {
+        //     input.select();
+        // });
+        // input.focus();
+        // input.select();
+        closeMenu();
+
         input.addEventListener("keyup", function (event) {
             // Number 13 is the "Enter" key on the keyboard
             if (event.keyCode === 13) {
@@ -86,33 +99,54 @@
 
                 renameStyle(styleBeingEdited.id, styleBeingEdited.name);
                 document.activeElement.blur();
+                hideInput();
+                closeMenu();
                 // Trigger the button element with a click
                 // document.getElementById("myBtn").click();
             }
         });
-        console.log(input);
+
+        // closeMenu(event, style);
     }
 
     function openMenu(event, style) {
+        mousePosX = event.clientX;
+        mousePosY = event.clientY;
         menu.classList.toggle("show");
     }
 
-    function closeMenu(event, style) {
-        more.children[1].classList.remove("show");
+    function closeMenu() {
+        menu.classList.remove("show");
+        console.log("removing show class");
 
         // var editInputs = event.currentTarget.getElementsByClassName("editName");
         // for (let i = 0; i < editInputs.length; i++) {
-        field.classList.remove("show");
+        // field.classList.remove("show");
         // }
     }
 
+    function hideInput() {
+        field.classList.remove("show");
+        renameStyle(styleBeingEdited.id, styleBeingEdited.name);
+    }
+
     function onPageClick(e) {
-        if (e.target === more || more.contains(e.target)) {
+        if (
+            // e.target === more ||
+            field.contains(e.target) ||
+            menu.contains(e.target)
+        ) {
             return;
         }
+        // if (field.contains(e.target) || menu.contains(e.target)) {
+        //     console.log("menu clicked");
+        // } else {
+        //     console.log("Clicked outside menu");
+        // }
 
         console.log("Clicked outside");
-        closeMenu(e, style);
+        hideInput();
+        closeMenu();
     }
 </script>
 
@@ -133,9 +167,10 @@
         box-shadow: 0px 2px 7px rgba(0, 0, 0, 0.15),
             0px 5px 17px rgba(0, 0, 0, 0.2);
         border-radius: 2px;
+        width: 80px;
     }
 
-    .menu > a {
+    .menu > span {
         line-height: 24px;
         padding-left: 16px;
         padding-right: 16px;
@@ -143,7 +178,7 @@
         display: block;
     }
 
-    .menu > a:hover {
+    .menu > span:hover {
         background-color: var(--blue);
         color: white;
     }
@@ -156,6 +191,7 @@
         position: absolute;
         top: -3px;
         right: 10px;
+        display: none;
     }
 
     .editName {
@@ -163,35 +199,61 @@
         position: absolute;
         top: 0;
         left: 0;
+        margin-left: -8px;
+        width: -webkit-fill-available;
     }
 
     #listItem {
         color: red;
+        user-select: none;
+    }
+
+    .layer-icon {
+        border: 1px solid #dcdcdc;
+        background: #f3f3f3;
+        border-radius: 999px;
+        width: 18px;
+        height: 18px;
+        margin-right: 8px;
+    }
+    .field {
+        position: relative;
     }
 </style>
 
 <svelte:body on:click={onPageClick} />
 
-<div id="listItem{style.id}" bind:this={listItem}>
-    <Type class="list-item pl-xsmall pr-xxsmall flex place-center">
-        <div
-            bind:this={field}
-            class="editName pl-xxsmall"
-            transition:fade={{ duration: 100 }}>
-            <Input bind:value={styleBeingEdited.name} class="mb-xxsmall" />
-        </div>
-        <span style="flex-grow: 1;">{style.name}</span>
-        <IconButton on:click={updateInstances(style.id)} iconName={IconSwap} />
-        <!-- <IconButton on:click={removeStyle(style.id)} iconName={IconMinus} /> -->
-        <span on:click={openMenu(event, style)} class="more" bind:this={more}>
-            <IconButton iconName={IconEllipses} />
-            <div class="menu" bind:this={menu}>
-                <div class="triangle" />
-                <a on:click={applyStyle(style.id)}>Apply</a>
-                <!-- <a on:click={renameStyle(style.id, 'test')}>Rename</a> -->
-                <a on:click={editStyle(event, style)}>Rename</a>
-                <a on:click={removeStyle(style.id)}>Delete</a>
+<div
+    id="listItem{style.id}"
+    bind:this={listItem}
+    on:contextmenu={openMenu(event, style)}>
+    <Type class="pl-xsmall pr-xxsmall flex place-center">
+        <span class="layer-icon" />
+        <div class="field flex place-center" style="flex-grow: 1;">
+            <div
+                bind:this={field}
+                class="editName"
+                transition:fade={{ duration: 100 }}>
+                <Input bind:value={styleBeingEdited.name} class="mb-xxsmall" />
             </div>
-        </span>
+            <span style="flex-grow: 1; user-select: none;">{style.name}</span>
+            <IconButton
+                on:click={updateInstances(style.id)}
+                iconName={IconSwap} />
+        </div>
+
+        <!-- <IconButton on:click={removeStyle(style.id)} iconName={IconMinus} /> -->
+
+        <!-- <IconButton iconName={IconEllipses} /> -->
+        <div
+            class="menu"
+            bind:this={menu}
+            style="left: {mousePosX}; top: {mousePosY}">
+            <div class="triangle" />
+            <span on:click={applyStyle(style.id)}>Apply</span>
+            <!-- <a on:click={renameStyle(style.id, 'test')}>Rename</a> -->
+            <span on:click={editStyle(event, style)}>Rename</span>
+            <span on:click={removeStyle(style.id)}>Delete</span>
+        </div>
     </Type>
 </div>
