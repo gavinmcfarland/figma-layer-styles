@@ -160,7 +160,6 @@
 
     function closeMenu() {
         menu.classList.remove("show");
-        console.log("removing show class");
 
         // var editInputs = event.currentTarget.getElementsByClassName("editName");
         // for (let i = 0; i < editInputs.length; i++) {
@@ -297,7 +296,6 @@
             bind:this={menu}
             style="left: {mousePosX}; top: {mousePosY}">
             <div class="triangle" />
-            {console.log(style.node)}
             <span on:click={applyStyle(style.id)}>Apply</span>
             <!-- <a on:click={renameStyle(style.id, 'test')}>Rename</a> -->
             <span on:click={editStyle(event, style)}>Rename</span>
