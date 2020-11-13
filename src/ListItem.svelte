@@ -9,6 +9,7 @@
         Type,
         IconButton,
         IconSwap,
+        IconPlus,
         IconEllipses,
     } from "figma-plugin-ds-svelte";
 
@@ -27,7 +28,7 @@
         var borderWeight = "";
         var borderRadius = "";
 
-        if (style.node.strokes) {
+        if (style.node.strokes.length > 0) {
             borderRgba = `rgba(${style.node.strokes[0].color.r * 255}, ${
                 style.node.strokes[0].color.g * 255
             }, ${style.node.strokes[0].color.b * 255}, ${
@@ -37,7 +38,7 @@
             border = `border: ${borderWeight} solid ${borderRgba};`;
         }
 
-        if (style.node.fills) {
+        if (style.node.fills.length > 0) {
             backgroundRgba = `rgba(${style.node.fills[0].color.r * 255}, ${
                 style.node.fills[0].color.g * 255
             }, ${style.node.fills[0].color.b * 255}, ${
@@ -87,6 +88,32 @@
             {
                 pluginMessage: {
                     type: "apply-style",
+                    id,
+                },
+            },
+            "*"
+        );
+        closeMenu();
+    }
+
+    function updateLayerStyle(id) {
+        parent.postMessage(
+            {
+                pluginMessage: {
+                    type: "update-style",
+                    id,
+                },
+            },
+            "*"
+        );
+        closeMenu();
+    }
+
+    function editLayerStyle(id) {
+        parent.postMessage(
+            {
+                pluginMessage: {
+                    type: "edit-layer-style",
                     id,
                 },
             },
@@ -288,9 +315,7 @@
                 <Input bind:value={styleBeingEdited.name} class="mb-xxsmall" />
             </div>
             <span style="flex-grow: 1; user-select: none;">{style.name}</span>
-            <IconButton
-                on:click={updateInstances(style.id)}
-                iconName={IconSwap} />
+            <IconButton on:click={applyStyle(style.id)} iconName={IconPlus} />
         </div>
 
         <div
@@ -298,7 +323,9 @@
             bind:this={menu}
             style="left: {mousePosX}; top: {mousePosY}">
             <div class="triangle" />
-            <span on:click={applyStyle(style.id)}>Apply</span>
+            <span on:click={editLayerStyle(style.id)}>Edit</span>
+            <span on:click={updateLayerStyle(style.id)}>Update</span>
+            <span on:click={updateInstances(style.id)}>Resync</span>
             <!-- <a on:click={renameStyle(style.id, 'test')}>Rename</a> -->
             <span on:click={editStyle(event, style)}>Rename</span>
             <span on:click={removeStyle(style.id)}>Delete</span>

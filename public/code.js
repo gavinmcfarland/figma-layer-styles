@@ -8,7 +8,12 @@
 function clone(val) {
     return JSON.parse(JSON.stringify(val));
 }
-function copyStyles(source) {
+function centerInViewport(node) {
+    // Position newly created table in center of viewport
+    node.x = figma.viewport.center.x - (node.width / 2);
+    node.y = figma.viewport.center.y - (node.height / 2);
+}
+function copyProperties(source) {
     var styles = {};
     styles.strokeStyleId = source.strokeStyleId;
     styles.strokes = source.strokes;
@@ -43,7 +48,7 @@ function copyStyles(source) {
     console.log(styles);
     return styles;
 }
-function addStyle(node) {
+function addLayerStyle(node) {
     var styles = figma.root.getPluginData("styles");
     if (styles !== "") {
         console.log("Getting styles");
@@ -52,11 +57,11 @@ function addStyle(node) {
     else {
         styles = [];
     }
-    styles.push({ id: node.id, node: copyStyles(node), name: node.name });
+    styles.push({ id: node.id, node: copyProperties(node), name: node.name });
     figma.root.setPluginData("styles", JSON.stringify(styles));
 }
-function updateStyle(id, name, properties) {
-    var styles = getStyles();
+function updateLayerStyle(id, name, properties) {
+    var styles = getLayerStyles();
     styles.map((obj) => {
         if (obj.id == id) {
             if (name) {
@@ -69,7 +74,7 @@ function updateStyle(id, name, properties) {
     });
     figma.root.setPluginData("styles", JSON.stringify(styles));
 }
-function getStyles(id) {
+function getLayerStyles(id) {
     var styles = figma.root.getPluginData("styles");
     console.log("Getting layer styles");
     if (styles !== "") {
@@ -101,7 +106,7 @@ function pasteProperties(target, properties) {
     Object.assign(target, properties);
     return target;
 }
-function updateStyles(selection, id) {
+function updateInstances(selection, id) {
     var nodes;
     if (selection) {
         nodes = selection;
@@ -127,19 +132,19 @@ function updateStyles(selection, id) {
         // Look for node with matching styleID
         var source = figma.getNodeById(styleId);
         if (source) {
-            var layerStyle = copyStyles(source);
-            updateStyle(styleId, null, layerStyle);
+            var layerStyle = copyProperties(source);
+            updateLayerStyle(styleId, null, layerStyle);
             pasteProperties(node, layerStyle);
         }
         else {
-            var layerStyle = getStyles(styleId).node;
+            var layerStyle = getLayerStyles(styleId).node;
             pasteProperties(node, layerStyle);
             console.log("Original node can't be found");
         }
     }
     // figma.closePlugin()
 }
-function clearStyles() {
+function clearLayerStyle() {
     figma.root.setPluginData("styles", "");
     console.log("Styles cleared");
     figma.closePlugin();
@@ -150,10 +155,10 @@ function createStyles(selection) {
     // var target = pasteProperties(figma.createFrame(), styles)
     node.setRelaunchData({ updateStyles: 'Update from component styles' });
     // figma.viewport.scrollAndZoomIntoView([target]);
-    addStyle(node);
+    addLayerStyle(node);
 }
 function postMessage() {
-    var styles = getStyles();
+    var styles = getLayerStyles();
     var message = styles;
     console.log("Posted message");
     figma.ui.postMessage(message);
@@ -166,18 +171,18 @@ function applyStyle(selection, styleId) {
         // Look for node with matching styleID
         var source = figma.getNodeById(styleId);
         if (source) {
-            var layerStyle = copyStyles(source);
+            var layerStyle = copyProperties(source);
             pasteProperties(node, layerStyle);
         }
         else {
-            var layerStyle = getStyles(styleId).node;
+            var layerStyle = getLayerStyles(styleId).node;
             pasteProperties(node, layerStyle);
             console.log("Original node can't be found");
         }
     }
 }
 function removeStyle(styleId) {
-    var styles = getStyles();
+    var styles = getLayerStyles();
     styles.splice(styles.findIndex(function (i) {
         return i.id === styleId;
     }), 1);
@@ -220,11 +225,34 @@ if (figma.command === "showStyles") {
             postMessage();
         }
         if (msg.type === "rename-style") {
-            updateStyle(msg.id, msg.name);
+            updateLayerStyle(msg.id, msg.name);
             postMessage();
         }
         if (msg.type === "update-instances") {
-            updateStyles(figma.currentPage.selection, msg.id);
+            updateInstances(figma.currentPage.selection, msg.id);
+            postMessage();
+        }
+        if (msg.type === "update-style") {
+            var properties = copyProperties(figma.currentPage.selection[0]);
+            updateLayerStyle(msg.id, null, properties);
+            figma.currentPage.selection[0].setPluginData("styleId", msg.id);
+            postMessage();
+        }
+        if (msg.type === "edit-layer-style") {
+            var node = figma.getNodeById(msg.id);
+            if (node) {
+                figma.viewport.scrollAndZoomIntoView([node]);
+                figma.viewport.zoom = 0.25;
+                figma.currentPage.selection = [node];
+            }
+            else {
+                node = figma.createFrame();
+                var properties = getLayerStyles(msg.id).node;
+                pasteProperties(node, properties);
+                centerInViewport(node);
+                // figma.viewport.scrollAndZoomIntoView([node])
+                figma.currentPage.selection = [node];
+            }
             postMessage();
         }
         if (msg.type === "apply-style") {
@@ -243,9 +271,9 @@ if (figma.command === "createStyles") {
     figma.closePlugin();
 }
 if (figma.command === "updateStyles") {
-    updateStyles(figma.currentPage.selection);
+    updateInstances(figma.currentPage.selection);
     figma.closePlugin();
 }
 if (figma.command === "clearStyles") {
-    clearStyles();
+    clearLayerStyle();
 }
