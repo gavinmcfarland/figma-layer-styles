@@ -8,27 +8,18 @@
 function clone(val) {
     return JSON.parse(JSON.stringify(val));
 }
-function centerInViewport(node) {
-    // Position newly created table in center of viewport
-    node.x = figma.viewport.center.x - (node.width / 2);
-    node.y = figma.viewport.center.y - (node.height / 2);
-}
 function copyProperties(source) {
     var styles = {};
-    styles.strokeStyleId = source.strokeStyleId;
     styles.strokes = source.strokes;
     styles.fillStyleId = source.fillStyleId;
     styles.fills = source.fills;
+    styles.strokeStyleId = source.strokeStyleId;
     styles.strokeWeight = source.strokeWeight;
     styles.strokeAlign = source.strokeAlign;
     styles.strokeCap = source.strokeCap;
     styles.strokeJoin = source.strokeJoin;
     styles.strokeMiterLimit = source.strokeMiterLimit;
     if (styles.type !== "INSTANCE") {
-        // styles.topLeftRadius = source.topLeftRadius
-        // styles.topRightRadius = source.topRightRadius
-        // styles.bottomLeftRadius = source.bottomLeftRadius
-        // styles.bottomRightRadius = source.bottomRightRadius
         if (source.cornerRadius === figma.mixed) {
             styles.topLeftRadius = source.topLeftRadius;
             styles.topRightRadius = source.topRightRadius;
@@ -42,25 +33,21 @@ function copyProperties(source) {
     styles.dashPattern = source.dashPattern;
     styles.clipsContent = source.clipsContent;
     styles.effects = clone(source.effects);
-    // for (let i = 0; i < current.children.length; i++) {
-    // 	styles.appendChild(current.children[i].clone())
-    // }
-    console.log(styles);
     return styles;
 }
 function addLayerStyle(node) {
-    var styles = figma.root.getPluginData("styles");
-    if (styles !== "") {
-        console.log("Getting styles");
-        styles = JSON.parse(styles);
-    }
-    else {
-        styles = [];
-    }
-    styles.push({ id: node.id, node: copyProperties(node), name: node.name });
-    figma.root.setPluginData("styles", JSON.stringify(styles));
+    var layerStyles = getLayerStyles();
+    // for (let i = 0; i < layerStyles.length; i++) {
+    // 	var layerStyle = layerStyles[i]
+    // 	if (layerStyle.id === node.id) {
+    // 		console.log("Layer style already exists")
+    // 		return
+    // 	}
+    // }
+    layerStyles.push({ id: node.id, node: copyProperties(node), name: node.name });
+    figma.root.setPluginData("styles", JSON.stringify(layerStyles));
 }
-function updateLayerStyle(id, name, properties) {
+function updateLayerStyle(id, name, properties, newId) {
     var styles = getLayerStyles();
     styles.map((obj) => {
         if (obj.id == id) {
@@ -70,13 +57,15 @@ function updateLayerStyle(id, name, properties) {
             if (properties) {
                 obj.node = properties;
             }
+            if (newId) {
+                obj.id = newId;
+            }
         }
     });
     figma.root.setPluginData("styles", JSON.stringify(styles));
 }
 function getLayerStyles(id) {
     var styles = figma.root.getPluginData("styles");
-    console.log("Getting layer styles");
     if (styles !== "") {
         styles = JSON.parse(styles);
     }
@@ -89,7 +78,6 @@ function getLayerStyles(id) {
         });
         styles = newStyles[0];
     }
-    console.log(styles);
     return styles;
 }
 function pasteProperties(target, properties) {
@@ -107,13 +95,13 @@ function pasteProperties(target, properties) {
     return target;
 }
 function updateInstances(selection, id) {
+    // Find nodes that should be updated with new properties
     var nodes;
     if (selection) {
         nodes = selection;
     }
     if (id) {
         nodes = [];
-        console.log(id);
         var pages = figma.root.children;
         var length = pages.length;
         for (let i = 0; i < length; i++) {
@@ -123,9 +111,8 @@ function updateInstances(selection, id) {
                 }
             });
         }
-        // nodes = [figma.getNodeById(id)]
     }
-    console.log(nodes);
+    // For each node
     for (let i = 0; i < nodes.length; i++) {
         var node = nodes[i];
         var styleId = node.getPluginData("styleId");
@@ -160,7 +147,6 @@ function createStyles(selection) {
 function postMessage() {
     var styles = getLayerStyles();
     var message = styles;
-    console.log("Posted message");
     figma.ui.postMessage(message);
 }
 function applyStyle(selection, styleId) {
@@ -188,6 +174,32 @@ function removeStyle(styleId) {
     }), 1);
     figma.root.setPluginData("styles", JSON.stringify(styles));
 }
+var thisNode;
+figma.on("selectionchange", () => {
+    console.log("Selection changed");
+    var node = figma.currentPage.selection[0];
+    if (node) {
+        if (node.getPluginData("styleId") !== "") {
+            console.log("Selection has a layer style");
+            if (node.id === node.getPluginData("styleId")) {
+                console.log("Selection is master");
+                thisNode = node;
+            }
+        }
+    }
+});
+// Trying to create a preview for updating layer style in list
+function update(thisNode) {
+    if (thisNode) {
+        var layerStyleId = thisNode.id;
+        var properties = copyProperties(thisNode);
+        updateLayerStyle(layerStyleId, null, properties);
+        postMessage();
+    }
+}
+setInterval(() => {
+    update(thisNode);
+}, 600);
 if (figma.command === "showStyles") {
     // This shows the HTML page in "ui.html".
     figma.showUI(__html__, { width: 240, height: 360 });
@@ -233,9 +245,10 @@ if (figma.command === "showStyles") {
             postMessage();
         }
         if (msg.type === "update-style") {
-            var properties = copyProperties(figma.currentPage.selection[0]);
-            updateLayerStyle(msg.id, null, properties);
-            figma.currentPage.selection[0].setPluginData("styleId", msg.id);
+            var node = figma.currentPage.selection[0];
+            var properties = copyProperties(node);
+            updateLayerStyle(msg.id, null, properties, node.id);
+            figma.currentPage.selection[0].setPluginData("styleId", node.id);
             postMessage();
         }
         if (msg.type === "edit-layer-style") {
@@ -249,8 +262,12 @@ if (figma.command === "showStyles") {
                 node = figma.createFrame();
                 var properties = getLayerStyles(msg.id).node;
                 pasteProperties(node, properties);
-                centerInViewport(node);
+                // centerInViewport(node)
+                figma.viewport.scrollAndZoomIntoView([node]);
+                figma.viewport.zoom = 0.25;
                 // figma.viewport.scrollAndZoomIntoView([node])
+                // TODO: Needs to update layer style with new style ID and I think update all connected frames with new style id
+                updateLayerStyle(msg.id, null, null, node.id);
                 figma.currentPage.selection = [node];
             }
             postMessage();
@@ -277,3 +294,4 @@ if (figma.command === "updateStyles") {
 if (figma.command === "clearStyles") {
     clearLayerStyle();
 }
+//# sourceMappingURL=code.js.map

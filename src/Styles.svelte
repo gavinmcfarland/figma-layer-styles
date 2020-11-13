@@ -5,7 +5,7 @@
 </script>
 
 <div style="margin-left: -8px; margin-right: -8px;">
-    {#each styles as style (style.id)}
+    {#each styles as style, i}
         <ListItem {style} />
     {/each}
 </div>
