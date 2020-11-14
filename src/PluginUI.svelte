@@ -98,6 +98,7 @@
 		left: 0;
 		width: 100%;
 		place-content: flex-end;
+		background-color: white;
 	}
 
 	/* :gloabl(.action-bar > *) {
@@ -110,6 +111,15 @@
 
 	.wrapper {
 		height: 100%;
+	}
+
+	:global(body) {
+		-ms-overflow-style: none; /* IE and Edge */
+		scrollbar-width: none; /* Firefox */
+	}
+
+	:global(body::-webkit-scrollbar) {
+		display: none;
 	}
 
 	:global(.show) {

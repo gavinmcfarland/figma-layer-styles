@@ -72,6 +72,7 @@
     };
 
     function updateInstances(id) {
+        closeMenu();
         parent.postMessage(
             {
                 pluginMessage: {
@@ -84,6 +85,7 @@
     }
 
     function applyStyle(id) {
+        closeMenu();
         parent.postMessage(
             {
                 pluginMessage: {
@@ -93,10 +95,10 @@
             },
             "*"
         );
-        closeMenu();
     }
 
     function updateLayerStyle(id) {
+        closeMenu();
         parent.postMessage(
             {
                 pluginMessage: {
@@ -106,10 +108,10 @@
             },
             "*"
         );
-        closeMenu();
     }
 
     function editLayerStyle(id) {
+        closeMenu();
         parent.postMessage(
             {
                 pluginMessage: {
@@ -119,7 +121,6 @@
             },
             "*"
         );
-        closeMenu();
     }
 
     function removeStyle(id) {
@@ -132,6 +133,7 @@
             },
             "*"
         );
+        closeMenu();
     }
 
     function renameStyle(id, name) {

@@ -1,12 +1,21 @@
 'use strict';
 
 // This plugin will open a modal to prompt the user to enter a number, and
-// it will then create that many rectangles on the screen.
-// This file holds the main code for the plugins. It has access to the *document*.
-// You can access browser APIs in the <script> tag inside "ui.html" which has a
-// full browser enviroment (see documentation).
+function pageNode(node) {
+    if (node.parent.type === "PAGE") {
+        return node.parent;
+    }
+    else {
+        return pageNode(node.parent);
+    }
+}
 function clone(val) {
     return JSON.parse(JSON.stringify(val));
+}
+function centerInViewport(node) {
+    // Position newly created table in center of viewport
+    node.x = figma.viewport.center.x - (node.width / 2);
+    node.y = figma.viewport.center.y - (node.height / 2);
 }
 function copyProperties(source) {
     var styles = {};
@@ -137,12 +146,19 @@ function clearLayerStyle() {
     figma.closePlugin();
 }
 function createStyles(selection) {
-    var node = selection[0];
-    node.setPluginData("styleId", node.id);
-    // var target = pasteProperties(figma.createFrame(), styles)
-    node.setRelaunchData({ updateStyles: 'Update from component styles' });
-    // figma.viewport.scrollAndZoomIntoView([target]);
-    addLayerStyle(node);
+    if (selection.length > 0) {
+        for (var i = 0; i < selection.length; i++) {
+            var node = selection[i];
+            node.setPluginData("styleId", node.id);
+            // var target = pasteProperties(figma.createFrame(), styles)
+            node.setRelaunchData({ updateStyles: 'Update from component styles' });
+            // figma.viewport.scrollAndZoomIntoView([target]);
+            addLayerStyle(node);
+        }
+    }
+    else {
+        figma.notify("No nodes selected");
+    }
 }
 function postMessage() {
     var styles = getLayerStyles();
@@ -173,6 +189,17 @@ function removeStyle(styleId) {
         return i.id === styleId;
     }), 1);
     figma.root.setPluginData("styles", JSON.stringify(styles));
+    // Remove plugin data from all nodes with matching style id
+    var pages = figma.root.children;
+    var length = pages.length;
+    for (let i = 0; i < length; i++) {
+        pages[i].findAll(node => {
+            if (node.getPluginData("styleId") === styleId) {
+                node.setPluginData("styleId", "");
+            }
+        });
+    }
+    // TODO: Remove relaunch data
 }
 var thisNode;
 figma.on("selectionchange", () => {
@@ -191,7 +218,7 @@ figma.on("selectionchange", () => {
 // Trying to create a preview for updating layer style in list
 function update(thisNode) {
     if (thisNode) {
-        var layerStyleId = thisNode.id;
+        var layerStyleId = thisNode.getPluginData("styleId");
         var properties = copyProperties(thisNode);
         updateLayerStyle(layerStyleId, null, properties);
         postMessage();
@@ -199,7 +226,21 @@ function update(thisNode) {
 }
 setInterval(() => {
     update(thisNode);
-}, 600);
+    // Remove plugin data from all nodes with matching style id
+    // This live updates all instances with new style. Performance is sluggish. Might be possible to speed it up if I stored an array of node ids which have layer style applied and then searched for node using getNodeById
+    if (thisNode) {
+        var pages = figma.root.children;
+        var length = pages.length;
+        for (let i = 0; i < length; i++) {
+            pages[i].findAll(node => {
+                if (node.getPluginData("styleId") === thisNode.getPluginData("styleId")) {
+                    var properties = copyProperties(thisNode);
+                    pasteProperties(node, properties);
+                }
+            });
+        }
+    }
+}, 1000);
 if (figma.command === "showStyles") {
     // This shows the HTML page in "ui.html".
     figma.showUI(__html__, { width: 240, height: 360 });
@@ -256,16 +297,19 @@ if (figma.command === "showStyles") {
             if (node) {
                 figma.viewport.scrollAndZoomIntoView([node]);
                 figma.viewport.zoom = 0.25;
+                figma.currentPage = pageNode(node);
                 figma.currentPage.selection = [node];
             }
             else {
                 node = figma.createFrame();
                 var properties = getLayerStyles(msg.id).node;
                 pasteProperties(node, properties);
-                // centerInViewport(node)
+                centerInViewport(node);
                 figma.viewport.scrollAndZoomIntoView([node]);
                 figma.viewport.zoom = 0.25;
                 // figma.viewport.scrollAndZoomIntoView([node])
+                // Set as the new master layer style
+                node.setPluginData("styleId", node.id);
                 // TODO: Needs to update layer style with new style ID and I think update all connected frames with new style id
                 updateLayerStyle(msg.id, null, null, node.id);
                 figma.currentPage.selection = [node];
@@ -294,4 +338,3 @@ if (figma.command === "updateStyles") {
 if (figma.command === "clearStyles") {
     clearLayerStyle();
 }
-//# sourceMappingURL=code.js.map
