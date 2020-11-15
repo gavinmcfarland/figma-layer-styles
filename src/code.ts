@@ -399,9 +399,9 @@ setInterval(() => {
 
 
 	// This live updates all instances with new style. Performance is a bit sluggish. Might be possible to speed it up if I stored an array of node ids which have layer style applied and then searched for node using getNodeById
-	if (thisNode) {
-		updateInstances(null, thisNode.id)
-	}
+	// if (thisNode) {
+	// 	updateInstances(null, thisNode.id)
+	// }
 	// TODO: Remove plugin data from all nodes with matching style id
 }, 600)
 

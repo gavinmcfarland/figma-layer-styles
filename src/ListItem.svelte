@@ -184,14 +184,17 @@
     }
 
     function openMenu(event, style) {
-        mousePosX = event.offsetX;
-        mousePosY = event.offsetY;
+        var rect = event.currentTarget.getBoundingClientRect();
+        event.currentTarget.classList.toggle("blue-bg");
+        mousePosX = event.clientX - rect.left;
+        mousePosY = event.clientY - rect.top;
+        console.log(mousePosX);
         menu.classList.toggle("show");
     }
 
     function closeMenu() {
         menu.classList.remove("show");
-
+        listItem.classList.remove("blue-bg");
         // var editInputs = event.currentTarget.getElementsByClassName("editName");
         // for (let i = 0; i < editInputs.length; i++) {
         // field.classList.remove("show");
@@ -299,6 +302,10 @@
     .field {
         position: relative;
     }
+
+    :global(.blue-bg) {
+        background-color: #daebf7;
+    }
 </style>
 
 <svelte:body on:click={onPageClick} />
@@ -324,7 +331,7 @@
         <div
             class="menu"
             bind:this={menu}
-            style="left: {mousePosX}; top: {mousePosY}">
+            style="left: {mousePosX}px; top: {mousePosY}px">
             <div class="triangle" />
             <span on:click={editLayerStyle(style.id)}>Edit</span>
             <span on:click={updateLayerStyle(style.id)}>Update</span>
