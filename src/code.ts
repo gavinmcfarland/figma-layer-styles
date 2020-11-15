@@ -313,6 +313,9 @@ function postMessage() {
 }
 
 function applyStyle(selection, styleId) {
+	// TODO: If node already has styleId and it matches it's node.id this means it is the master node for another style. Not sure how to fix this, as other style will look to this node for it. Possible fix is to change style ID of node.
+
+
 	for (let i = 0; i < selection.length; i++) {
 		var node = selection[i]
 		node.setPluginData("styleId", styleId)
