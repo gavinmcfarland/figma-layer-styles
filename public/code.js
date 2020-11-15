@@ -44,6 +44,23 @@ function copyProperties(source) {
     styles.effects = clone(source.effects);
     return styles;
 }
+function getInstances(id) {
+    var array = figma.root.getPluginData("layerStyle" + id);
+    if (array !== "") {
+        array = JSON.parse(array);
+    }
+    else {
+        array = [];
+    }
+    array.push(id);
+    figma.root.setPluginData("layerStyle" + id, JSON.stringify(array));
+    return array;
+}
+function addInstance(styleId, nodeId) {
+    var instances = getInstances(styleId);
+    instances.push(nodeId);
+    figma.root.setPluginData("layerStyle" + styleId, JSON.stringify(instances));
+}
 function addLayerStyle(node) {
     var layerStyles = getLayerStyles();
     // for (let i = 0; i < layerStyles.length; i++) {
@@ -55,6 +72,7 @@ function addLayerStyle(node) {
     // }
     layerStyles.push({ id: node.id, node: copyProperties(node), name: node.name });
     figma.root.setPluginData("styles", JSON.stringify(layerStyles));
+    addInstance(node.id, node.id);
 }
 function updateLayerStyle(id, name, properties, newId) {
     var styles = getLayerStyles();
@@ -91,17 +109,48 @@ function getLayerStyles(id) {
 }
 function pasteProperties(target, properties) {
     // Remove strokes and fills if stroke or fill layer style detected (otherwise figma detaches them)
-    for (let i = 0; i < properties.length; i++) {
-        var property = properties[i];
-        if (property.fillStyleId !== "") {
-            delete property.fills;
-        }
-        if (property.strokeStyleId !== "") {
-            delete property.strokes;
-        }
+    // for (let i = 0; i < properties.length; i++) {
+    // 	var property = properties[i]
+    if (properties.fillStyleId !== "") {
+        delete properties.fills;
+    }
+    if (properties.strokeStyleId !== "") {
+        delete properties.strokes;
     }
     Object.assign(target, properties);
     return target;
+    // target.strokeWeight = properties.strokeWeight
+    // target.strokeAlign = properties.strokeAlign
+    // target.strokeCap = properties.strokeCap
+    // target.strokeJoin = properties.strokeJoin
+    // target.strokeMiterLimit = properties.strokeMiterLimit
+    // if (properties.fillStyleId !== "") {
+    // 	target.fillStyleId = properties.fillStyleId
+    // }
+    // else {
+    // 	target.fills = properties.fills
+    // }
+    // if (properties.strokeStyleId !== "") {
+    // 	target.strokeStyleId = properties.strokeStyleId
+    // }
+    // else {
+    // 	target.strokes = properties.strokes
+    // }
+    // // if (target.type !== "INSTANCE") {
+    // // 	if (properties.cornerRadius === figma.mixed) {
+    // // 		target.topLeftRadius = properties.topLeftRadius
+    // // 		target.topRightRadius = properties.topRightRadius
+    // // 		target.bottomLeftRadius = properties.bottomLeftRadius
+    // // 		target.bottomRightRadius = properties.bottomRightRadius
+    // // 	}
+    // // 	else {
+    // // 		target.cornerRadius = properties.cornerRadius
+    // // 	}
+    // // }
+    // target.dashPattern = properties.dashPattern
+    // target.clipsContent = properties.clipsContent
+    // target.effects = clone(properties.effects)
+    // return target
 }
 function updateInstances(selection, id) {
     // Find nodes that should be updated with new properties
@@ -120,6 +169,12 @@ function updateInstances(selection, id) {
                 }
             });
         }
+        //// This method is a lot slower!!!
+        // var instances = getInstances(thisNode.getPluginData("styleId"))
+        // for (var i = 0; i < instances.length; i++) {
+        // 	var instanceId = instances[i]
+        // 	nodes.push(figma.getNodeById(instanceId))
+        // }
     }
     // For each node
     for (let i = 0; i < nodes.length; i++) {
@@ -169,6 +224,7 @@ function applyStyle(selection, styleId) {
     for (let i = 0; i < selection.length; i++) {
         var node = selection[i];
         node.setPluginData("styleId", styleId);
+        addInstance(styleId, node.id);
         // var styleId = node.getPluginData("styleId")
         // Look for node with matching styleID
         var source = figma.getNodeById(styleId);
@@ -214,6 +270,9 @@ figma.on("selectionchange", () => {
             }
         }
     }
+    else {
+        thisNode = null;
+    }
 });
 // Trying to create a preview for updating layer style in list
 function update(thisNode) {
@@ -226,21 +285,12 @@ function update(thisNode) {
 }
 setInterval(() => {
     update(thisNode);
-    // Remove plugin data from all nodes with matching style id
-    // This live updates all instances with new style. Performance is sluggish. Might be possible to speed it up if I stored an array of node ids which have layer style applied and then searched for node using getNodeById
+    // This live updates all instances with new style. Performance is a bit sluggish. Might be possible to speed it up if I stored an array of node ids which have layer style applied and then searched for node using getNodeById
     if (thisNode) {
-        var pages = figma.root.children;
-        var length = pages.length;
-        for (let i = 0; i < length; i++) {
-            pages[i].findAll(node => {
-                if (node.getPluginData("styleId") === thisNode.getPluginData("styleId")) {
-                    var properties = copyProperties(thisNode);
-                    pasteProperties(node, properties);
-                }
-            });
-        }
+        updateInstances(null, thisNode.id);
     }
-}, 1000);
+    // TODO: Remove plugin data from all nodes with matching style id
+}, 600);
 if (figma.command === "showStyles") {
     // This shows the HTML page in "ui.html".
     figma.showUI(__html__, { width: 240, height: 360 });
@@ -338,3 +388,4 @@ if (figma.command === "updateStyles") {
 if (figma.command === "clearStyles") {
     clearLayerStyle();
 }
+//# sourceMappingURL=code.js.map

@@ -184,8 +184,8 @@
     }
 
     function openMenu(event, style) {
-        mousePosX = event.clientX;
-        mousePosY = event.clientY;
+        mousePosX = event.offsetX;
+        mousePosY = event.offsetY;
         menu.classList.toggle("show");
     }
 
@@ -304,6 +304,7 @@
 <svelte:body on:click={onPageClick} />
 
 <div
+    style="position: relative;"
     id="listItem{style.id}"
     bind:this={listItem}
     on:contextmenu={openMenu(event, style)}>
