@@ -39,8 +39,16 @@ function copyProperties(source) {
             styles.cornerRadius = source.cornerRadius;
         }
     }
-    styles.dashPattern = source.dashPattern;
+    styles.guides = source.guides;
+    styles.gridStyleId = source.gridStyleId;
+    styles.layoutGrids = source.layoutGrids;
+    styles.horizontalPadding = source.horizontalPadding;
+    styles.verticalPadding = source.verticalPadding;
+    styles.itemSpacing = source.itemSpacing;
+    styles.layoutMode = source.layoutMode;
+    styles.counterAxisSizingMode = source.counterAxisSizingMode;
     styles.clipsContent = source.clipsContent;
+    styles.dashPattern = source.dashPattern;
     styles.effects = clone(source.effects);
     return styles;
 }
@@ -116,6 +124,20 @@ function pasteProperties(target, properties) {
     }
     if (properties.strokeStyleId !== "") {
         delete properties.strokes;
+    }
+    if (properties.gridStyleId !== "") {
+        delete properties.guides;
+    }
+    if (target.type !== "FRAME" && target.type !== "COMPONENT") {
+        delete properties.clipsContent;
+        delete properties.gridStyleId;
+        delete properties.guides;
+        delete properties.layoutGrids;
+        delete properties.horizontalPadding;
+        delete properties.verticalPadding;
+        delete properties.itemSpacing;
+        delete properties.layoutMode;
+        delete properties.counterAxisSizingMode;
     }
     Object.assign(target, properties);
     return target;
@@ -221,6 +243,7 @@ function postMessage() {
     figma.ui.postMessage(message);
 }
 function applyStyle(selection, styleId) {
+    // TODO: If node already has styleId and it matches it's node.id this means it is the master node for another style. Not sure how to fix this, as other style will look to this node for it. Possible fix is to change style ID of node.
     for (let i = 0; i < selection.length; i++) {
         var node = selection[i];
         node.setPluginData("styleId", styleId);

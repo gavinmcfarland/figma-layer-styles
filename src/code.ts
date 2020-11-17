@@ -61,8 +61,24 @@ function copyProperties(source) {
 
 	}
 
-	styles.dashPattern = source.dashPattern
+	styles.guides = source.guides
+
+	styles.gridStyleId = source.gridStyleId
+
+	styles.layoutGrids = source.layoutGrids
+
+	styles.horizontalPadding = source.horizontalPadding
+	styles.verticalPadding = source.verticalPadding
+	styles.itemSpacing = source.itemSpacing
+
+	styles.layoutMode = source.layoutMode
+	styles.counterAxisSizingMode = source.counterAxisSizingMode
+
 	styles.clipsContent = source.clipsContent
+
+
+	styles.dashPattern = source.dashPattern
+
 	styles.effects = clone(source.effects)
 	return styles
 }
@@ -169,6 +185,26 @@ function pasteProperties(target, properties) {
 
 	if (properties.strokeStyleId !== "") {
 		delete properties.strokes
+	}
+
+	if (properties.gridStyleId !== "") {
+		delete properties.guides
+	}
+
+	if (target.type !== "FRAME" && target.type !== "COMPONENT") {
+		delete properties.clipsContent
+
+		delete properties.gridStyleId
+		delete properties.guides
+
+		delete properties.layoutGrids
+
+		delete properties.horizontalPadding
+		delete properties.verticalPadding
+		delete properties.itemSpacing
+
+		delete properties.layoutMode
+		delete properties.counterAxisSizingMode
 	}
 
 
