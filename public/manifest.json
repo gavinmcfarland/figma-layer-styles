@@ -20,6 +20,10 @@
     {
       "name": "Clear Styles",
       "command": "clearStyles"
+    },
+    {
+      "name": "Copy Styles",
+      "command": "copyProperties"
     }
   ],
   "relaunchButtons": [

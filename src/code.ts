@@ -61,20 +61,24 @@ function copyProperties(source) {
 
 	}
 
-	styles.guides = source.guides
+	styles.effects = source.effects
 
-	styles.gridStyleId = source.gridStyleId
 
-	styles.layoutGrids = source.layoutGrids
+	if (styles.type === "FRAME" || styles.type === "COMPONENT") {
+		styles.horizontalPadding = source.horizontalPadding
+		styles.verticalPadding = source.verticalPadding
+		styles.itemSpacing = source.itemSpacing
 
-	styles.horizontalPadding = source.horizontalPadding
-	styles.verticalPadding = source.verticalPadding
-	styles.itemSpacing = source.itemSpacing
+		styles.layoutMode = source.layoutMode
+		styles.counterAxisSizingMode = source.counterAxisSizingMode
 
-	styles.layoutMode = source.layoutMode
-	styles.counterAxisSizingMode = source.counterAxisSizingMode
+		styles.clipsContent = source.clipsContent
 
-	styles.clipsContent = source.clipsContent
+		styles.gridStyleId = source.gridStyleId
+		styles.layoutGrids = source.layoutGrids
+		styles.guides = source.guides
+	}
+
 
 
 	styles.dashPattern = source.dashPattern
@@ -122,7 +126,7 @@ function addLayerStyle(node) {
 	// 	}
 	// }
 
-	layerStyles.push({ id: node.id, node: copyProperties(node), name: node.name })
+	layerStyles.push({ id: node.id, node: copyPaste(node), name: node.name })
 
 	figma.root.setPluginData("styles", JSON.stringify(layerStyles))
 
@@ -174,49 +178,111 @@ function getLayerStyles(id?) {
 	return styles
 }
 
-function pasteProperties(target, properties) {
+function pasteProperties(target, source) {
 
-	// Remove strokes and fills if stroke or fill layer style detected (otherwise figma detaches them)
-	// for (let i = 0; i < properties.length; i++) {
-	// 	var property = properties[i]
-	if (properties.fillStyleId !== "") {
-		delete properties.fills
+	// corner-radius
+
+	// target.cornerSmoothing = source.cornerSmoothing
+
+	if (source.type !== "TEXT") {
+		if (source.cornerRadius === figma.mixed) {
+			target.topLeftRadius = source.topLeftRadius
+			target.topRightRadius = source.topRightRadius
+			target.bottomLeftRadius = source.bottomLeftRadius
+			target.bottomRightRadius = source.bottomRightRadius
+		}
+		else {
+			target.cornerRadius = source.cornerRadius
+		}
 	}
 
-	if (properties.strokeStyleId !== "") {
-		delete properties.strokes
-	}
 
-	if (properties.gridStyleId !== "") {
-		delete properties.guides
+	// strokes
+	source.strokeStyleId === "" ? target.strokes = source.strokes : target.strokeStyleId = source.strokeStyleId
+
+	target.strokeAlign = source.strokeAlign
+	target.strokeCap = source.strokeCap
+	target.strokeJoin = source.strokeJoin
+	target.strokeMiterLimit = source.strokeMiterLimit
+	target.strokeStyleId = source.strokeStyleId
+	target.strokeWeight = source.strokeWeight
+	target.dashPattern = source.dashPattern
+
+	// fills
+	source.fillStyleId === "" ? target.fills = source.fills : target.fillStyleId = source.fillStyleId
+
+	// effects
+	source.effectStyleId === "" ? target.effects = source.effects : target.effectStyleId = source.effectStyleId
+
+
+	if (target.type === "FRAME" || target.type === "COMPONENT") {
+
+		// backgrounds
+		source.backgroundStyleId === "" ? target.backgrounds = source.backgrounds : target.backgroundStyleId = source.backgroundStyleId
 	}
 
 	if (target.type !== "FRAME" && target.type !== "COMPONENT") {
-		delete properties.clipsContent
 
-		delete properties.gridStyleId
-		delete properties.guides
+		// target.horizontalPadding = source.horizontalPadding
+		// target.verticalPadding = source.horizontalPadding
 
-		delete properties.layoutGrids
+		// target.paddingBottom = source.paddingBottom
+		// target.paddingLeft = source.paddingLeft
+		// target.paddingRight = source.paddingRight
+		// target.paddingTop = source.paddingTop
+		// target.itemSpacing = source.itemSpacing
 
-		delete properties.horizontalPadding
-		delete properties.verticalPadding
-		delete properties.itemSpacing
+		// target.layoutMode = source.layoutMode
+		// target.layoutAlign = source.layoutAlign
+		// target.layoutGrow = source.layoutGrow
 
-		delete properties.layoutMode
-		delete properties.counterAxisSizingMode
+		// target.counterAxisAlignItems = source.counterAxisAlignItems
+		// target.counterAxisSizingMode = source.counterAxisSizingMode
+		// target.primaryAxisAlignItems = source.primaryAxisAlignItems
+		// target.primaryAxisSizingMode = source.primaryAxisSizingMode
+
+		// source.gridStyleId === "" ? target.layoutGrids = source.layoutGrids : target.gridStyleId = source.gridStyleId
+
+		// target.guides = source.guides
+
+		// target.overflowDirection = source.overflowDirection
+		// target.overlayBackground = source.overlayBackground
+		// target.overlayBackgroundInteraction = source.overlayBackgroundInteraction
+		// target.overlayPositionType = source.overlayPositionType
+
 	}
 
+	// target.absoluteTransform = source.absoluteTransform
+	// target.blendMode = source.blendMode
 
-	Object.assign(target, properties)
+	// target.constrainProportions = source.constrainProportions
+	// target.constraints = source.constraints
+
+	// target.exportSettings = source.exportSettings
+	// target.id = source.id
+	// target.isMask = source.isMask
+	// target.locked = source.locked
+	// target.name = source.name
+	// target.parent = source.parent
+	// target.children = source.children
+	// target.numberOfFixedChildren = source.numberOfFixedChildren
+	// target.clipsContent = source.clipsContent
+	// target.rotation = source.rotation
+
+	// target.reactions = source.reactions
+	// target.relativeTransform = source.relativeTransform
+	// target.removed = source.removed
+	// target.rotation = source.rotation
+	// target.opacity = source.opacity
+
+	// target.expanded = source.expanded
+	// target.visible = source.visible
+	// target.width = source.width
+	// target.height = source.height
+	// target.x = source.x
+	// target.y = source.y
 
 	return target
-
-
-
-
-
-
 
 	// target.strokeWeight = properties.strokeWeight
 	// target.strokeAlign = properties.strokeAlign
@@ -257,6 +323,123 @@ function pasteProperties(target, properties) {
 	// target.clipsContent = properties.clipsContent
 	// target.effects = clone(properties.effects)
 	// return target
+}
+
+function copyPaste(source, target?) {
+
+
+	var temp = {}
+
+	if (target) {
+		temp = target
+	}
+
+	// corner-radius
+
+	// target.cornerSmoothing = source.cornerSmoothing
+
+	if (target.type !== "TEXT") {
+		if (source.cornerRadius === figma.mixed) {
+			temp.topLeftRadius = source.topLeftRadius
+			temp.topRightRadius = source.topRightRadius
+			temp.bottomLeftRadius = source.bottomLeftRadius
+			temp.bottomRightRadius = source.bottomRightRadius
+		}
+		else {
+			temp.cornerRadius = source.cornerRadius
+		}
+	}
+
+
+	// strokes
+	source.strokeStyleId === "" ? temp.strokes = source.strokes : temp.strokeStyleId = source.strokeStyleId
+
+	temp.strokeAlign = source.strokeAlign
+	temp.strokeCap = source.strokeCap
+	temp.strokeJoin = source.strokeJoin
+	temp.strokeMiterLimit = source.strokeMiterLimit
+	temp.strokeStyleId = source.strokeStyleId
+	temp.strokeWeight = source.strokeWeight
+	temp.dashPattern = source.dashPattern
+
+	// fills
+	source.fillStyleId === "" ? temp.fills = source.fills : temp.fillStyleId = source.fillStyleId
+
+	// effects
+	source.effectStyleId === "" ? temp.effects = source.effects : temp.effectStyleId = source.effectStyleId
+
+
+	// backgrounds
+	if (!target || target?.type === "FRAME" || target?.type === "COMPONENT") {
+		source.backgroundStyleId === "" ? temp.backgrounds = source.backgrounds : temp.backgroundStyleId = source.backgroundStyleId
+	}
+
+
+	if (!target || target?.type !== "FRAME" && target?.type !== "COMPONENT") {
+
+		// temp.horizontalPadding = source.horizontalPadding
+		// temp.verticalPadding = source.horizontalPadding
+
+		// temp.paddingBottom = source.paddingBottom
+		// temp.paddingLeft = source.paddingLeft
+		// temp.paddingRight = source.paddingRight
+		// temp.paddingTop = source.paddingTop
+		// temp.itemSpacing = source.itemSpacing
+
+		// temp.layoutMode = source.layoutMode
+		// temp.layoutAlign = source.layoutAlign
+		// temp.layoutGrow = source.layoutGrow
+
+		// temp.counterAxisAlignItems = source.counterAxisAlignItems
+		// temp.counterAxisSizingMode = source.counterAxisSizingMode
+		// temp.primaryAxisAlignItems = source.primaryAxisAlignItems
+		// temp.primaryAxisSizingMode = source.primaryAxisSizingMode
+
+		// source.gridStyleId === "" ? temp.layoutGrids = source.layoutGrids : temp.gridStyleId = source.gridStyleId
+
+		// temp.guides = source.guides
+
+		// temp.overflowDirection = source.overflowDirection
+		// temp.overlayBackground = source.overlayBackground
+		// temp.overlayBackgroundInteraction = source.overlayBackgroundInteraction
+		// temp.overlayPositionType = source.overlayPositionType
+
+	}
+
+
+	// temp.absoluteTransform = source.absoluteTransform
+	// temp.blendMode = source.blendMode
+
+	// temp.constrainProportions = source.constrainProportions
+	// temp.constraints = source.constraints
+
+	// temp.exportSettings = source.exportSettings
+	// temp.id = source.id
+	// temp.isMask = source.isMask
+	// temp.locked = source.locked
+	// temp.name = source.name
+	// temp.parent = source.parent
+	// temp.children = source.children
+	// temp.numberOfFixedChildren = source.numberOfFixedChildren
+	// temp.clipsContent = source.clipsContent
+	// temp.rotation = source.rotation
+
+	// temp.reactions = source.reactions
+	// temp.relativeTransform = source.relativeTransform
+	// temp.removed = source.removed
+	// temp.rotation = source.rotation
+	// temp.opacity = source.opacity
+
+	// temp.expanded = source.expanded
+	// temp.visible = source.visible
+	// temp.width = source.width
+	// temp.height = source.height
+	// temp.x = source.x
+	// temp.y = source.y
+
+	console.log(temp)
+
+	return temp
 }
 
 function updateInstances(selection, id?) {
@@ -303,13 +486,13 @@ function updateInstances(selection, id?) {
 		var source = figma.getNodeById(styleId)
 
 		if (source) {
-			var layerStyle = copyProperties(source)
+			var layerStyle = source
 			updateLayerStyle(styleId, null, layerStyle);
-			pasteProperties(node, layerStyle)
+			copyPaste(layerStyle, node)
 		}
 		else {
 			var layerStyle = getLayerStyles(styleId).node
-			pasteProperties(node, layerStyle)
+			copyPaste(layerStyle, node)
 			console.log("Original node can't be found")
 		}
 	}
@@ -363,12 +546,14 @@ function applyStyle(selection, styleId) {
 		var source = figma.getNodeById(styleId)
 
 		if (source) {
-			var layerStyle = copyProperties(source)
-			pasteProperties(node, layerStyle)
+
+			var layerStyle = source
+
+			copyPaste(layerStyle, node)
 		}
 		else {
 			var layerStyle = getLayerStyles(styleId).node
-			pasteProperties(node, layerStyle)
+			copyPaste(layerStyle, node)
 			console.log("Original node can't be found")
 		}
 
@@ -426,7 +611,7 @@ function update(thisNode) {
 
 	if (thisNode) {
 		var layerStyleId = thisNode.getPluginData("styleId")
-		var properties = copyProperties(thisNode)
+		var properties = copyPaste(thisNode)
 		updateLayerStyle(layerStyleId, null, properties);
 		postMessage()
 	}
@@ -506,7 +691,7 @@ if (figma.command === "showStyles") {
 
 		if (msg.type === "update-style") {
 			var node = figma.currentPage.selection[0]
-			var properties = copyProperties(node)
+			var properties = copyPaste(node)
 			updateLayerStyle(msg.id, null, properties, node.id)
 			figma.currentPage.selection[0].setPluginData("styleId", node.id)
 			postMessage()
@@ -523,7 +708,7 @@ if (figma.command === "showStyles") {
 			else {
 				node = figma.createFrame()
 				var properties = getLayerStyles(msg.id).node
-				pasteProperties(node, properties)
+				copyPaste(properties, node)
 				centerInViewport(node)
 				figma.viewport.scrollAndZoomIntoView([node])
 				figma.viewport.zoom = 0.25
@@ -570,4 +755,10 @@ if (figma.command === "updateStyles") {
 
 if (figma.command === "clearStyles") {
 	clearLayerStyle()
+}
+
+
+if (figma.command === "copyProperties") {
+	copyPaste(figma.currentPage.selection[0])
+	// figma.closePlugin()
 }

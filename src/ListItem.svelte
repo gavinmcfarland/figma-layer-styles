@@ -27,15 +27,18 @@
         var borderRgba = "";
         var borderWeight = "";
         var borderRadius = "";
+        var boxShadow = "";
 
         if (style.node.strokes.length > 0) {
-            borderRgba = `rgba(${style.node.strokes[0].color.r * 255}, ${
-                style.node.strokes[0].color.g * 255
-            }, ${style.node.strokes[0].color.b * 255}, ${
-                style.node.strokes[0].opacity
-            })`;
-            borderWeight = `${style.node.strokeWeight / 4}px`;
-            border = `border: ${borderWeight} solid ${borderRgba};`;
+            if (style.node.strokes[0].visible) {
+                borderRgba = `rgba(${style.node.strokes[0].color.r * 255}, ${
+                    style.node.strokes[0].color.g * 255
+                }, ${style.node.strokes[0].color.b * 255}, ${
+                    style.node.strokes[0].opacity
+                })`;
+                borderWeight = `${style.node.strokeWeight / 2}px`;
+                border = `border: ${borderWeight} solid ${borderRgba};`;
+            }
         }
 
         if (style.node.fills.length > 0) {
@@ -48,16 +51,34 @@
         }
 
         if (style.node.cornerRadius) {
-            borderRadius = `border-radius: ${style.node.cornerRadius / 4}px`;
+            borderRadius = `border-radius: ${style.node.cornerRadius / 4}px;`;
         } else {
             borderRadius = `border-radius: ${style.node.topLeftRadius / 4}px ${
                 style.node.topRightRadius / 4
             }px ${style.node.bottomRightRadius / 4}px ${
                 style.node.bottomLeftRadius / 4
-            }px`;
+            }px;`;
         }
 
-        string = `${background} ${border} ${borderRadius}`;
+        if (style.node.effects) {
+            var boxShadows = [];
+            for (let i = 0; i < style.node.effects.length; i++) {
+                var effect = style.node.effects[i];
+
+                if (effect.type === "DROP_SHADOW") {
+                    boxShadows.push(
+                        `${effect.offset.x / 2}px ${effect.offset.y / 2}px ${
+                            effect.radius / 2
+                        }px rgba(${effect.color.r * 255}, ${
+                            effect.color.g * 255
+                        }, ${effect.color.b * 255}, ${effect.color.a})`
+                    );
+                }
+            }
+            boxShadow = `box-shadow: ${boxShadows.join(", ")};`;
+        }
+
+        string = `${background} ${border} ${borderRadius} ${boxShadow}`;
 
         return string;
     }
@@ -188,7 +209,7 @@
         event.currentTarget.classList.toggle("blue-bg");
         mousePosX = event.clientX - rect.left;
         mousePosY = event.clientY - rect.top;
-        console.log(mousePosX);
+
         menu.classList.toggle("show");
     }
 
@@ -220,7 +241,6 @@
         //     console.log("Clicked outside menu");
         // }
 
-        console.log("Clicked outside");
         hideInput();
         closeMenu();
     }
@@ -279,15 +299,19 @@
     .editName {
         display: none;
         position: absolute;
-        top: 0;
+        top: -8px;
         left: 0;
         margin-left: -8px;
-        width: -webkit-fill-available;
+        width: 196px;
     }
 
-    #listItem {
-        color: red;
+    .list-item {
         user-select: none;
+        display: flex;
+    }
+
+    .list-item:hover {
+        background-color: #daebf7;
     }
 
     .layer-icon {
@@ -311,10 +335,12 @@
 <svelte:body on:click={onPageClick} />
 
 <div
+    class="list-item"
     style="position: relative;"
     id="listItem{style.id}"
     bind:this={listItem}
-    on:contextmenu={openMenu(event, style)}>
+    on:contextmenu={openMenu(event, style)}
+    on:click={applyStyle(style.id)}>
     <Type class="pl-xsmall pr-xxsmall flex place-center">
         <span class="layer-icon" style={styleCss(style)} />
         <div class="field flex place-center" style="flex-grow: 1;">
@@ -325,7 +351,7 @@
                 <Input bind:value={styleBeingEdited.name} class="mb-xxsmall" />
             </div>
             <span style="flex-grow: 1; user-select: none;">{style.name}</span>
-            <IconButton on:click={applyStyle(style.id)} iconName={IconPlus} />
+            <!-- <IconButton on:click={applyStyle(style.id)} iconName={IconPlus} /> -->
         </div>
 
         <div
@@ -333,9 +359,9 @@
             bind:this={menu}
             style="left: {mousePosX}px; top: {mousePosY}px">
             <div class="triangle" />
-            <span on:click={editLayerStyle(style.id)}>Edit</span>
-            <span on:click={updateLayerStyle(style.id)}>Update</span>
-            <span on:click={updateInstances(style.id)}>Resync</span>
+            <!-- <span on:click={editLayerStyle(style.id)}>Edit</span> -->
+            <!-- <span on:click={updateLayerStyle(style.id)}>Update</span> -->
+            <span on:click={updateInstances(style.id)}>Refresh</span>
             <!-- <a on:click={renameStyle(style.id, 'test')}>Rename</a> -->
             <span on:click={editStyle(event, style)}>Rename</span>
             <span on:click={removeStyle(style.id)}>Delete</span>
