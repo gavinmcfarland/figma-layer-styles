@@ -78,6 +78,7 @@ function getLayerStyles(id) {
     return styles;
 }
 function copyPaste(source, target) {
+    // Description: Copies properties from node to another. When no target is specificed properties are copied to an object.
     var temp = {};
     if (target) {
         temp = target;
@@ -96,7 +97,13 @@ function copyPaste(source, target) {
         }
     }
     // strokes
-    source.strokeStyleId === "" ? temp.strokes = source.strokes : temp.strokeStyleId = source.strokeStyleId;
+    if (target) {
+        source.strokeStyleId === "" ? temp.strokes = source.strokes : temp.strokeStyleId = source.strokeStyleId;
+    }
+    else {
+        temp.strokeStyleId = source.strokeStyleId;
+        temp.strokes = source.strokes;
+    }
     temp.strokeAlign = source.strokeAlign;
     temp.strokeCap = source.strokeCap;
     temp.strokeJoin = source.strokeJoin;
@@ -105,12 +112,32 @@ function copyPaste(source, target) {
     temp.strokeWeight = source.strokeWeight;
     temp.dashPattern = source.dashPattern;
     // fills
-    source.fillStyleId === "" ? temp.fills = source.fills : temp.fillStyleId = source.fillStyleId;
+    if (target) {
+        source.fillStyleId === "" ? temp.fills = source.fills : temp.fillStyleId = source.fillStyleId;
+    }
+    else {
+        temp.fillStyleId = source.fillStyleId;
+        temp.fills = source.fills;
+    }
     // effects
-    source.effectStyleId === "" ? temp.effects = source.effects : temp.effectStyleId = source.effectStyleId;
+    if (target) {
+        source.effectStyleId === "" ? temp.effects = source.effects : temp.effectStyleId = source.effectStyleId;
+    }
+    else {
+        temp.effectStyleId = source.effectStyleId;
+        temp.effects = source.effects;
+    }
     // backgrounds
-    if (!target || (target === null || target === void 0 ? void 0 : target.type) === "FRAME" || (target === null || target === void 0 ? void 0 : target.type) === "COMPONENT") {
-        source.backgroundStyleId === "" ? temp.backgrounds = source.backgrounds : temp.backgroundStyleId = source.backgroundStyleId;
+    if (target) {
+        if (!target || (target === null || target === void 0 ? void 0 : target.type) === "FRAME" || (target === null || target === void 0 ? void 0 : target.type) === "COMPONENT") {
+            if (source.backgroundStyleId || source.backgrounds) {
+                source.backgroundStyleId === "" ? temp.backgrounds = source.backgrounds : temp.backgroundStyleId = source.backgroundStyleId;
+            }
+        }
+    }
+    else {
+        temp.backgroundStyleId = source.backgroundStyleId;
+        temp.backgrounds = source.backgroundStyleId;
     }
     if (!target || (target === null || target === void 0 ? void 0 : target.type) !== "FRAME" && (target === null || target === void 0 ? void 0 : target.type) !== "COMPONENT") ;
     // temp.absoluteTransform = source.absoluteTransform

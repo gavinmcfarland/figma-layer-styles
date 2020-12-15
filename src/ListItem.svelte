@@ -51,12 +51,12 @@
         }
 
         if (style.node.cornerRadius) {
-            borderRadius = `border-radius: ${style.node.cornerRadius / 4}px;`;
+            borderRadius = `border-radius: ${style.node.cornerRadius / 2}px;`;
         } else {
-            borderRadius = `border-radius: ${style.node.topLeftRadius / 4}px ${
-                style.node.topRightRadius / 4
-            }px ${style.node.bottomRightRadius / 4}px ${
-                style.node.bottomLeftRadius / 4
+            borderRadius = `border-radius: ${style.node.topLeftRadius / 2}px ${
+                style.node.topRightRadius / 2
+            }px ${style.node.bottomRightRadius / 2}px ${
+                style.node.bottomLeftRadius / 2
             }px;`;
         }
 
@@ -176,7 +176,7 @@
         var editName = listItem.querySelector(".editName");
         var input = listItem.querySelector("input");
         editName.classList.add("show");
-        var focusedElement;
+        listItem.classList.add("blue-bg");
 
         input.focus();
         // input.addEventListener("focus", () => {
@@ -215,7 +215,7 @@
 
     function closeMenu() {
         menu.classList.remove("show");
-        listItem.classList.remove("blue-bg");
+        // listItem.classList.remove("blue-bg");
         // var editInputs = event.currentTarget.getElementsByClassName("editName");
         // for (let i = 0; i < editInputs.length; i++) {
         // field.classList.remove("show");
@@ -243,11 +243,13 @@
 
         hideInput();
         closeMenu();
+        listItem.classList.remove("blue-bg");
     }
 
     window.addEventListener("blur", () => {
         hideInput();
         closeMenu();
+        listItem.classList.remove("blue-bg");
     });
 </script>
 
@@ -268,7 +270,7 @@
         box-shadow: 0px 2px 7px rgba(0, 0, 0, 0.15),
             0px 5px 17px rgba(0, 0, 0, 0.2);
         border-radius: 2px;
-        width: 80px;
+        width: 90px;
     }
 
     .menu > span {
@@ -310,6 +312,10 @@
         display: flex;
     }
 
+    .list-item > * {
+        user-select: none;
+    }
+
     .list-item:hover {
         background-color: #daebf7;
     }
@@ -339,27 +345,32 @@
     style="position: relative;"
     id="listItem{style.id}"
     bind:this={listItem}
-    on:contextmenu={openMenu(event, style)}
-    on:click={applyStyle(style.id)}>
-    <Type class="pl-xsmall pr-xxsmall flex place-center">
-        <span class="layer-icon" style={styleCss(style)} />
-        <div class="field flex place-center" style="flex-grow: 1;">
-            <div
-                bind:this={field}
-                class="editName"
-                transition:fade={{ duration: 100 }}>
-                <Input bind:value={styleBeingEdited.name} class="mb-xxsmall" />
+    on:contextmenu={openMenu(event, style)}>
+    <div on:click={applyStyle(style.id)} style="display: flex; flex-grow: 1;">
+        <Type class="pl-xsmall pr-xxsmall flex place-center">
+            <span class="layer-icon" style={styleCss(style)} />
+            <div class="field flex place-center" style="flex-grow: 1;">
+                <div
+                    bind:this={field}
+                    class="editName"
+                    transition:fade={{ duration: 100 }}>
+                    <Input
+                        bind:value={styleBeingEdited.name}
+                        class="mb-xxsmall" />
+                </div>
+                <span
+                    style="flex-grow: 1; user-select: none;">{style.name}</span>
+                <!-- <IconButton on:click={applyStyle(style.id)} iconName={IconPlus} /> -->
             </div>
-            <span style="flex-grow: 1; user-select: none;">{style.name}</span>
-            <!-- <IconButton on:click={applyStyle(style.id)} iconName={IconPlus} /> -->
-        </div>
-
+        </Type>
+    </div>
+    <Type class="flex place-center">
         <div
             class="menu"
             bind:this={menu}
             style="left: {mousePosX}px; top: {mousePosY}px">
             <div class="triangle" />
-            <!-- <span on:click={editLayerStyle(style.id)}>Edit</span> -->
+            <!-- <span on:click={editLayerStyle(style.id)}>Edit Style</span> -->
             <!-- <span on:click={updateLayerStyle(style.id)}>Update</span> -->
             <span on:click={updateInstances(style.id)}>Refresh</span>
             <!-- <a on:click={renameStyle(style.id, 'test')}>Rename</a> -->

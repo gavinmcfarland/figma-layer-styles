@@ -178,154 +178,9 @@ function getLayerStyles(id?) {
 	return styles
 }
 
-function pasteProperties(target, source) {
-
-	// corner-radius
-
-	// target.cornerSmoothing = source.cornerSmoothing
-
-	if (source.type !== "TEXT") {
-		if (source.cornerRadius === figma.mixed) {
-			target.topLeftRadius = source.topLeftRadius
-			target.topRightRadius = source.topRightRadius
-			target.bottomLeftRadius = source.bottomLeftRadius
-			target.bottomRightRadius = source.bottomRightRadius
-		}
-		else {
-			target.cornerRadius = source.cornerRadius
-		}
-	}
-
-
-	// strokes
-	source.strokeStyleId === "" ? target.strokes = source.strokes : target.strokeStyleId = source.strokeStyleId
-
-	target.strokeAlign = source.strokeAlign
-	target.strokeCap = source.strokeCap
-	target.strokeJoin = source.strokeJoin
-	target.strokeMiterLimit = source.strokeMiterLimit
-	target.strokeStyleId = source.strokeStyleId
-	target.strokeWeight = source.strokeWeight
-	target.dashPattern = source.dashPattern
-
-	// fills
-	source.fillStyleId === "" ? target.fills = source.fills : target.fillStyleId = source.fillStyleId
-
-	// effects
-	source.effectStyleId === "" ? target.effects = source.effects : target.effectStyleId = source.effectStyleId
-
-
-	if (target.type === "FRAME" || target.type === "COMPONENT") {
-
-		// backgrounds
-		source.backgroundStyleId === "" ? target.backgrounds = source.backgrounds : target.backgroundStyleId = source.backgroundStyleId
-	}
-
-	if (target.type !== "FRAME" && target.type !== "COMPONENT") {
-
-		// target.horizontalPadding = source.horizontalPadding
-		// target.verticalPadding = source.horizontalPadding
-
-		// target.paddingBottom = source.paddingBottom
-		// target.paddingLeft = source.paddingLeft
-		// target.paddingRight = source.paddingRight
-		// target.paddingTop = source.paddingTop
-		// target.itemSpacing = source.itemSpacing
-
-		// target.layoutMode = source.layoutMode
-		// target.layoutAlign = source.layoutAlign
-		// target.layoutGrow = source.layoutGrow
-
-		// target.counterAxisAlignItems = source.counterAxisAlignItems
-		// target.counterAxisSizingMode = source.counterAxisSizingMode
-		// target.primaryAxisAlignItems = source.primaryAxisAlignItems
-		// target.primaryAxisSizingMode = source.primaryAxisSizingMode
-
-		// source.gridStyleId === "" ? target.layoutGrids = source.layoutGrids : target.gridStyleId = source.gridStyleId
-
-		// target.guides = source.guides
-
-		// target.overflowDirection = source.overflowDirection
-		// target.overlayBackground = source.overlayBackground
-		// target.overlayBackgroundInteraction = source.overlayBackgroundInteraction
-		// target.overlayPositionType = source.overlayPositionType
-
-	}
-
-	// target.absoluteTransform = source.absoluteTransform
-	// target.blendMode = source.blendMode
-
-	// target.constrainProportions = source.constrainProportions
-	// target.constraints = source.constraints
-
-	// target.exportSettings = source.exportSettings
-	// target.id = source.id
-	// target.isMask = source.isMask
-	// target.locked = source.locked
-	// target.name = source.name
-	// target.parent = source.parent
-	// target.children = source.children
-	// target.numberOfFixedChildren = source.numberOfFixedChildren
-	// target.clipsContent = source.clipsContent
-	// target.rotation = source.rotation
-
-	// target.reactions = source.reactions
-	// target.relativeTransform = source.relativeTransform
-	// target.removed = source.removed
-	// target.rotation = source.rotation
-	// target.opacity = source.opacity
-
-	// target.expanded = source.expanded
-	// target.visible = source.visible
-	// target.width = source.width
-	// target.height = source.height
-	// target.x = source.x
-	// target.y = source.y
-
-	return target
-
-	// target.strokeWeight = properties.strokeWeight
-	// target.strokeAlign = properties.strokeAlign
-	// target.strokeCap = properties.strokeCap
-	// target.strokeJoin = properties.strokeJoin
-	// target.strokeMiterLimit = properties.strokeMiterLimit
-
-
-
-	// if (properties.fillStyleId !== "") {
-	// 	target.fillStyleId = properties.fillStyleId
-	// }
-	// else {
-	// 	target.fills = properties.fills
-	// }
-
-	// if (properties.strokeStyleId !== "") {
-	// 	target.strokeStyleId = properties.strokeStyleId
-	// }
-	// else {
-	// 	target.strokes = properties.strokes
-	// }
-
-	// // if (target.type !== "INSTANCE") {
-	// // 	if (properties.cornerRadius === figma.mixed) {
-	// // 		target.topLeftRadius = properties.topLeftRadius
-	// // 		target.topRightRadius = properties.topRightRadius
-	// // 		target.bottomLeftRadius = properties.bottomLeftRadius
-	// // 		target.bottomRightRadius = properties.bottomRightRadius
-	// // 	}
-	// // 	else {
-	// // 		target.cornerRadius = properties.cornerRadius
-	// // 	}
-
-	// // }
-
-	// target.dashPattern = properties.dashPattern
-	// target.clipsContent = properties.clipsContent
-	// target.effects = clone(properties.effects)
-	// return target
-}
-
 function copyPaste(source, target?) {
+
+	// Description: Copies properties from node to another. When no target is specificed properties are copied to an object.
 
 
 	var temp = {}
@@ -352,7 +207,13 @@ function copyPaste(source, target?) {
 
 
 	// strokes
-	source.strokeStyleId === "" ? temp.strokes = source.strokes : temp.strokeStyleId = source.strokeStyleId
+	if (target) {
+		source.strokeStyleId === "" ? temp.strokes = source.strokes : temp.strokeStyleId = source.strokeStyleId
+	}
+	else {
+		temp.strokeStyleId = source.strokeStyleId
+		temp.strokes = source.strokes
+	}
 
 	temp.strokeAlign = source.strokeAlign
 	temp.strokeCap = source.strokeCap
@@ -363,16 +224,37 @@ function copyPaste(source, target?) {
 	temp.dashPattern = source.dashPattern
 
 	// fills
-	source.fillStyleId === "" ? temp.fills = source.fills : temp.fillStyleId = source.fillStyleId
+	if (target) {
+		source.fillStyleId === "" ? temp.fills = source.fills : temp.fillStyleId = source.fillStyleId
+	}
+	else {
+		temp.fillStyleId = source.fillStyleId
+		temp.fills = source.fills
+	}
 
 	// effects
-	source.effectStyleId === "" ? temp.effects = source.effects : temp.effectStyleId = source.effectStyleId
-
+	if (target) {
+		source.effectStyleId === "" ? temp.effects = source.effects : temp.effectStyleId = source.effectStyleId
+	}
+	else {
+		temp.effectStyleId = source.effectStyleId
+		temp.effects = source.effects
+	}
 
 	// backgrounds
-	if (!target || target?.type === "FRAME" || target?.type === "COMPONENT") {
-		source.backgroundStyleId === "" ? temp.backgrounds = source.backgrounds : temp.backgroundStyleId = source.backgroundStyleId
+	if (target) {
+		if (!target || target?.type === "FRAME" || target?.type === "COMPONENT") {
+			if (source.backgroundStyleId || source.backgrounds) {
+				source.backgroundStyleId === "" ? temp.backgrounds = source.backgrounds : temp.backgroundStyleId = source.backgroundStyleId
+			}
+
+		}
 	}
+	else {
+		temp.backgroundStyleId = source.backgroundStyleId
+		temp.backgrounds = source.backgroundStyleId
+	}
+
 
 
 	if (!target || target?.type !== "FRAME" && target?.type !== "COMPONENT") {

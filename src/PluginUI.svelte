@@ -94,7 +94,8 @@
 
 	.action-bar {
 		position: fixed;
-		bottom: 0;
+		bottom: 1px;
+		border-radius: 2px;
 		left: 0;
 		width: 100%;
 		place-content: flex-end;
@@ -110,7 +111,7 @@
 	} */
 
 	.wrapper {
-		height: 100%;
+		height: calc(100% - 1px);
 	}
 
 	:global(body) {
