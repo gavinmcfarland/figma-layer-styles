@@ -338,7 +338,7 @@ function copyPaste(source, target?) {
 
 	// target.cornerSmoothing = source.cornerSmoothing
 
-	if (target.type !== "TEXT") {
+	if (target?.type !== "TEXT" && target?.type !== "LINE") {
 		if (source.cornerRadius === figma.mixed) {
 			temp.topLeftRadius = source.topLeftRadius
 			temp.topRightRadius = source.topRightRadius

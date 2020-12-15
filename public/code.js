@@ -84,7 +84,7 @@ function copyPaste(source, target) {
     }
     // corner-radius
     // target.cornerSmoothing = source.cornerSmoothing
-    if (target.type !== "TEXT") {
+    if ((target === null || target === void 0 ? void 0 : target.type) !== "TEXT" && (target === null || target === void 0 ? void 0 : target.type) !== "LINE") {
         if (source.cornerRadius === figma.mixed) {
             temp.topLeftRadius = source.topLeftRadius;
             temp.topRightRadius = source.topRightRadius;
