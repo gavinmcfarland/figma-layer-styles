@@ -29,34 +29,53 @@
         var borderRadius = "";
         var boxShadow = "";
 
-        if (style.node.strokes.length > 0) {
+        if (style.node.strokes && style.node.strokes.length > 0) {
             if (style.node.strokes[0].visible) {
                 borderRgba = `rgba(${style.node.strokes[0].color.r * 255}, ${
                     style.node.strokes[0].color.g * 255
                 }, ${style.node.strokes[0].color.b * 255}, ${
                     style.node.strokes[0].opacity
                 })`;
-                borderWeight = `${style.node.strokeWeight / 2}px`;
-                border = `border: ${borderWeight} solid ${borderRgba};`;
+
+                var borderStyle = "solid";
+
+                if (
+                    style.node.dashPattern &&
+                    style.node.dashPattern.length > 0
+                ) {
+                    borderStyle = "dashed";
+                }
+
+                borderWeight = `${style.node.strokeWeight}px`;
+                border = `border: ${borderWeight} ${borderStyle} ${borderRgba};`;
             }
         }
 
-        if (style.node.fills.length > 0) {
-            backgroundRgba = `rgba(${style.node.fills[0].color.r * 255}, ${
-                style.node.fills[0].color.g * 255
-            }, ${style.node.fills[0].color.b * 255}, ${
-                style.node.fills[0].opacity
-            })`;
-            background = `background-color: ${backgroundRgba};`;
+        if (style.node.fills && style.node.fills.length > 0) {
+            var fills = [];
+            for (let i = 0; i < style.node.fills.length; i++) {
+                var fill = style.node.fills[i];
+
+                fills.push(
+                    `linear-gradient( rgba(${fill.color.r * 255}, ${
+                        fill.color.g * 255
+                    }, ${fill.color.b * 255}, ${fill.opacity}),
+                    rgba(${fill.color.r * 255}, ${fill.color.g * 255}, ${
+                        fill.color.b * 255
+                    }, ${fill.opacity}))`
+                );
+            }
+
+            background = `background-image: ${fills.reverse().join(", ")};`;
         }
 
         if (style.node.cornerRadius) {
             borderRadius = `border-radius: ${style.node.cornerRadius / 2}px;`;
         } else {
-            borderRadius = `border-radius: ${style.node.topLeftRadius / 2}px ${
-                style.node.topRightRadius / 2
-            }px ${style.node.bottomRightRadius / 2}px ${
-                style.node.bottomLeftRadius / 2
+            borderRadius = `border-radius: ${style.node.topLeftRadius / 3}px ${
+                style.node.topRightRadius / 3
+            }px ${style.node.bottomRightRadius / 3}px ${
+                style.node.bottomLeftRadius / 3
             }px;`;
         }
 
@@ -67,15 +86,20 @@
 
                 if (effect.type === "DROP_SHADOW") {
                     boxShadows.push(
-                        `${effect.offset.x / 2}px ${effect.offset.y / 2}px ${
-                            effect.radius / 2
-                        }px rgba(${effect.color.r * 255}, ${
-                            effect.color.g * 255
-                        }, ${effect.color.b * 255}, ${effect.color.a})`
+                        `drop-shadow(${effect.offset.x / 2}px ${
+                            effect.offset.y / 2
+                        }px ${effect.radius / 2}px rgba(${
+                            effect.color.r * 255
+                        }, ${effect.color.g * 255}, ${effect.color.b * 255}, ${
+                            effect.color.a
+                        }))`
                     );
                 }
             }
-            boxShadow = `box-shadow: ${boxShadows.join(", ")};`;
+
+            // filter: drop-shadow(30px 10px 4px #4444dd)
+
+            boxShadow = `filter: ${boxShadows.join(" ")};`;
         }
 
         string = `${background} ${border} ${borderRadius} ${boxShadow}`;

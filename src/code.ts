@@ -5,6 +5,235 @@
 // You can access browser APIs in the <script> tag inside "ui.html" which has a
 // full browser enviroment (see documentation).
 
+const nodeProperties = [
+	'id',
+	'parent',
+	'name',
+	'removed',
+	'visible',
+	'locked',
+	'children',
+	'constraints',
+	'absoluteTransform',
+	'relativeTransform',
+	'x',
+	'y',
+	'rotation',
+	'width',
+	'height',
+	'constrainProportions',
+	'layoutAlign',
+	'layoutGrow',
+	'opacity',
+	'blendMode',
+	'isMask',
+	'effects',
+	'effectStyleId',
+	'expanded',
+	'backgrounds',
+	'backgroundStyleId',
+	'fills',
+	'strokes',
+	'strokeWeight',
+	'strokeMiterLimit',
+	'strokeAlign',
+	'strokeCap',
+	'strokeJoin',
+	'dashPattern',
+	'fillStyleId',
+	'strokeStyleId',
+	'cornerRadius',
+	'cornerSmoothing',
+	'topLeftRadius',
+	'topRightRadius',
+	'bottomLeftRadius',
+	'bottomRightRadius',
+	'exportSettings',
+	'overflowDirection',
+	'numberOfFixedChildren',
+	'overlayPositionType',
+	'overlayBackground',
+	'overlayBackgroundInteraction',
+	'reactions',
+	'description',
+	'remote',
+	'key',
+	'layoutMode',
+	'primaryAxisSizingMode',
+	'counterAxisSizingMode',
+	'primaryAxisAlignItems',
+	'counterAxisAlignItems',
+	'paddingLeft',
+	'paddingRight',
+	'paddingTop',
+	'paddingBottom',
+	'itemSpacing',
+	'horizontalPadding',
+	'verticalPadding',
+	'layoutGrids',
+	'gridStyleId',
+	'clipsContent',
+	'guides'
+]
+
+function clone(val) {
+	return JSON.parse(JSON.stringify(val))
+}
+
+// Testing with a function which copies only matching properties
+function prune(source, target, includeArray?, excludeArray?) {
+	var temp = {}
+	var array
+
+	if (includeArray) {
+		array = includeArray
+	}
+	else if (excludeArray) {
+		array = nodeProperties.filter(function (el) {
+			return !excludeArray.includes(el);
+		})
+	}
+	else {
+		array = nodeProperties
+	}
+
+	for (var key1 in target) {
+		for (var key2 in source) {
+			if (array.includes(key2)) {
+				if (key1 === key2) {
+					temp[key2] = source[key2];
+				}
+			}
+
+		}
+	}
+	return temp;
+}
+
+function nodeToObject(node: any, withoutRelations?: boolean) {
+	const props = Object.entries(Object.getOwnPropertyDescriptors(node.__proto__))
+	const blacklist = ['parent', 'children', 'removed', 'masterComponent']
+	const obj: any = { id: node.id, type: node.type }
+	for (const [name, prop] of props) {
+		if (prop.get && !blacklist.includes(name)) {
+			try {
+				if (typeof obj[name] === 'symbol') {
+					obj[name] = 'Mixed'
+				} else {
+					obj[name] = prop.get.call(node)
+				}
+			} catch (err) {
+				obj[name] = undefined
+			}
+		}
+	}
+	if (node.parent && !withoutRelations) {
+		obj.parent = { id: node.parent.id, type: node.parent.type }
+	}
+	if (node.children && !withoutRelations) {
+		obj.children = node.children.map((child: any) => nodeToObject(child, withoutRelations))
+	}
+	if (node.masterComponent && !withoutRelations) {
+		obj.masterComponent = nodeToObject(node.masterComponent, withoutRelations)
+	}
+	return obj
+}
+
+function cloneNode(val) {
+	const type = typeof val
+
+	if (
+		type === 'undefined' ||
+		type === 'number' ||
+		type === 'string' ||
+		type === 'boolean' ||
+		type === 'symbol' ||
+		val === null
+	) {
+		return val
+	} else if (type === 'object') {
+		if (val instanceof Array) {
+			return val.map(clone)
+		} else if (val instanceof Uint8Array) {
+			return new Uint8Array(val)
+		} else {
+			const o = {}
+			for (const key in val) {
+				o[key] = cloneNode(val[key])
+			}
+			return o
+		}
+	}
+
+	throw 'unknown'
+}
+
+// function copy(source) {
+// 	var temp = {}
+// 	for (var key1 in source) {
+// 		temp[key1] = source[key1];
+// 	}
+// 	return temp;
+// }
+
+function copyPaste(source, target?) {
+
+	// Description: Copies properties from node to another. When no target is specificed properties are copied to an object.
+	var temp
+	var readOnlyProps = [
+		'id',
+		'parent',
+		'removed',
+		'children',
+		'absoluteTransform',
+		'width',
+		'height',
+		'overlayPositionType',
+		'overlayBackground',
+		'overlayBackgroundInteraction',
+		'reactions',
+		'remote',
+		'key',
+		'type'
+	]
+
+	var exclude = [
+		"name",
+		"removed",
+		"visible",
+		"reactions",
+		"locked",
+		"x",
+		"y",
+		"rotation",
+		"constrainProportions",
+		"exportSettings",
+		"relativeTransform",
+		"constraints"
+	]
+
+	exclude = exclude.concat(readOnlyProps)
+
+	if (!target) {
+		temp = nodeToObject(source)
+	}
+	else {
+		temp = prune(source, target, null, exclude)
+	}
+
+
+
+	if (temp.cornerRadius === figma.mixed) {
+		delete temp.cornerRadius
+	}
+
+
+
+	if (target) Object.assign(target, temp)
+
+	return temp
+}
+
 function pageId(node) {
 	if (node.parent.type === "PAGE") {
 		return node.parent.id
@@ -23,9 +252,7 @@ function pageNode(node) {
 	}
 }
 
-function clone(val) {
-	return JSON.parse(JSON.stringify(val))
-}
+
 
 function centerInViewport(node) {
 	// Position newly created table in center of viewport
@@ -125,12 +352,13 @@ function addLayerStyle(node) {
 	// 		return
 	// 	}
 	// }
+	var layerStyle = { id: node.id, node: copyPaste(node), name: node.name }
 
-	layerStyles.push({ id: node.id, node: copyPaste(node), name: node.name })
+	layerStyles.push(layerStyle)
 
 	figma.root.setPluginData("styles", JSON.stringify(layerStyles))
 
-	addInstance(node.id, node.id)
+
 }
 
 function updateLayerStyle(id, name?, properties?, newId?) {
@@ -158,6 +386,7 @@ function getLayerStyles(id?) {
 	var styles: any = figma.root.getPluginData("styles")
 
 
+
 	if (styles !== "") {
 		styles = JSON.parse(styles)
 	}
@@ -178,151 +407,9 @@ function getLayerStyles(id?) {
 	return styles
 }
 
-function copyPaste(source, target?) {
-
-	// Description: Copies properties from node to another. When no target is specificed properties are copied to an object.
-
-
-	var temp = {}
-
-	if (target) {
-		temp = target
-	}
-
-	// corner-radius
-
-	// target.cornerSmoothing = source.cornerSmoothing
-
-	if (target?.type !== "TEXT" && target?.type !== "LINE") {
-		if (source.cornerRadius === figma.mixed) {
-			temp.topLeftRadius = source.topLeftRadius
-			temp.topRightRadius = source.topRightRadius
-			temp.bottomLeftRadius = source.bottomLeftRadius
-			temp.bottomRightRadius = source.bottomRightRadius
-		}
-		else {
-			temp.cornerRadius = source.cornerRadius
-		}
-	}
-
-
-	// strokes
-	if (target) {
-		source.strokeStyleId === "" ? temp.strokes = source.strokes : temp.strokeStyleId = source.strokeStyleId
-	}
-	else {
-		temp.strokeStyleId = source.strokeStyleId
-		temp.strokes = source.strokes
-	}
-
-	temp.strokeAlign = source.strokeAlign
-	temp.strokeCap = source.strokeCap
-	temp.strokeJoin = source.strokeJoin
-	temp.strokeMiterLimit = source.strokeMiterLimit
-	temp.strokeStyleId = source.strokeStyleId
-	temp.strokeWeight = source.strokeWeight
-	temp.dashPattern = source.dashPattern
-
-	// fills
-	if (target) {
-		source.fillStyleId === "" ? temp.fills = source.fills : temp.fillStyleId = source.fillStyleId
-	}
-	else {
-		temp.fillStyleId = source.fillStyleId
-		temp.fills = source.fills
-	}
-
-	// effects
-	if (target) {
-		source.effectStyleId === "" ? temp.effects = source.effects : temp.effectStyleId = source.effectStyleId
-	}
-	else {
-		temp.effectStyleId = source.effectStyleId
-		temp.effects = source.effects
-	}
-
-	// backgrounds
-	if (target) {
-		if (!target || target?.type === "FRAME" || target?.type === "COMPONENT") {
-			if (source.backgroundStyleId || source.backgrounds) {
-				source.backgroundStyleId === "" ? temp.backgrounds = source.backgrounds : temp.backgroundStyleId = source.backgroundStyleId
-			}
-
-		}
-	}
-	else {
-		temp.backgroundStyleId = source.backgroundStyleId
-		temp.backgrounds = source.backgroundStyleId
-	}
 
 
 
-	if (!target || target?.type !== "FRAME" && target?.type !== "COMPONENT") {
-
-		// temp.horizontalPadding = source.horizontalPadding
-		// temp.verticalPadding = source.horizontalPadding
-
-		// temp.paddingBottom = source.paddingBottom
-		// temp.paddingLeft = source.paddingLeft
-		// temp.paddingRight = source.paddingRight
-		// temp.paddingTop = source.paddingTop
-		// temp.itemSpacing = source.itemSpacing
-
-		// temp.layoutMode = source.layoutMode
-		// temp.layoutAlign = source.layoutAlign
-		// temp.layoutGrow = source.layoutGrow
-
-		// temp.counterAxisAlignItems = source.counterAxisAlignItems
-		// temp.counterAxisSizingMode = source.counterAxisSizingMode
-		// temp.primaryAxisAlignItems = source.primaryAxisAlignItems
-		// temp.primaryAxisSizingMode = source.primaryAxisSizingMode
-
-		// source.gridStyleId === "" ? temp.layoutGrids = source.layoutGrids : temp.gridStyleId = source.gridStyleId
-
-		// temp.guides = source.guides
-
-		// temp.overflowDirection = source.overflowDirection
-		// temp.overlayBackground = source.overlayBackground
-		// temp.overlayBackgroundInteraction = source.overlayBackgroundInteraction
-		// temp.overlayPositionType = source.overlayPositionType
-
-	}
-
-
-	// temp.absoluteTransform = source.absoluteTransform
-	// temp.blendMode = source.blendMode
-
-	// temp.constrainProportions = source.constrainProportions
-	// temp.constraints = source.constraints
-
-	// temp.exportSettings = source.exportSettings
-	// temp.id = source.id
-	// temp.isMask = source.isMask
-	// temp.locked = source.locked
-	// temp.name = source.name
-	// temp.parent = source.parent
-	// temp.children = source.children
-	// temp.numberOfFixedChildren = source.numberOfFixedChildren
-	// temp.clipsContent = source.clipsContent
-	// temp.rotation = source.rotation
-
-	// temp.reactions = source.reactions
-	// temp.relativeTransform = source.relativeTransform
-	// temp.removed = source.removed
-	// temp.rotation = source.rotation
-	// temp.opacity = source.opacity
-
-	// temp.expanded = source.expanded
-	// temp.visible = source.visible
-	// temp.width = source.width
-	// temp.height = source.height
-	// temp.x = source.x
-	// temp.y = source.y
-
-	console.log(temp)
-
-	return temp
-}
 
 function updateInstances(selection, id?) {
 
@@ -369,7 +456,7 @@ function updateInstances(selection, id?) {
 
 		if (source) {
 			var layerStyle = source
-			updateLayerStyle(styleId, null, layerStyle);
+			updateLayerStyle(styleId, null, copyPaste(layerStyle));
 			copyPaste(layerStyle, node)
 		}
 		else {
@@ -406,13 +493,6 @@ function createStyles(selection) {
 	}
 }
 
-function postMessage() {
-	var styles = getLayerStyles();
-	var message = styles
-
-	figma.ui.postMessage(message)
-}
-
 function applyStyle(selection, styleId) {
 	// TODO: If node already has styleId and it matches it's node.id this means it is the master node for another style. Not sure how to fix this, as other style will look to this node for it. Possible fix is to change style ID of node.
 
@@ -420,7 +500,6 @@ function applyStyle(selection, styleId) {
 	for (let i = 0; i < selection.length; i++) {
 		var node = selection[i]
 		node.setPluginData("styleId", styleId)
-		addInstance(styleId, node.id)
 
 		// var styleId = node.getPluginData("styleId")
 
@@ -442,27 +521,43 @@ function applyStyle(selection, styleId) {
 	}
 }
 
-function removeStyle(styleId) {
+function removeLayerStyle(styleId) {
 	var styles = getLayerStyles()
 
-	styles.splice(styles.findIndex(function (i) {
-		return i.id === styleId;
+	// Remove layer style with matching node
+	styles.splice(styles.findIndex(node => {
+		return node.id === styleId;
 	}), 1);
 
+	// Set layer styles again
 	figma.root.setPluginData("styles", JSON.stringify(styles))
 
 	// Remove plugin data from all nodes with matching style id
-	var pages = figma.root.children
-	var length = pages.length;
-	for (let i = 0; i < length; i++) {
-		pages[i].findAll(node => {
-			if (node.getPluginData("styleId") === styleId) {
-				node.setPluginData("styleId", "")
-			}
-		})
-	}
+	// var pages = figma.root.children
+	// var length = pages.length;
+	// for (let i = 0; i < length; i++) {
+	// 	pages[i].findAll(node => {
+	// 		if (node.getPluginData("styleId") === styleId) {
+	// 			node.setPluginData("styleId", "")
+	// 		}
+	// 	})
+	// }
+
+	figma.root.findAll(node => {
+		if (node.getPluginData("styleId") === styleId) {
+			node.setPluginData("styleId", "")
+		}
+	})
 
 	// TODO: Remove relaunch data
+}
+
+
+function postMessage() {
+	var styles = getLayerStyles();
+	var message = styles
+
+	figma.ui.postMessage(message)
 }
 
 
@@ -610,7 +705,7 @@ if (figma.command === "showStyles") {
 		}
 
 		if (msg.type === "remove-style") {
-			removeStyle(msg.id)
+			removeLayerStyle(msg.id)
 			postMessage()
 		}
 
