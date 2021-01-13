@@ -56,14 +56,16 @@
             for (let i = 0; i < style.node.fills.length; i++) {
                 var fill = style.node.fills[i];
 
-                fills.push(
-                    `linear-gradient( rgba(${fill.color.r * 255}, ${
-                        fill.color.g * 255
-                    }, ${fill.color.b * 255}, ${fill.opacity}),
+                if (fill.type === "SOLID") {
+                    fills.push(
+                        `linear-gradient( rgba(${fill.color.r * 255}, ${
+                            fill.color.g * 255
+                        }, ${fill.color.b * 255}, ${fill.opacity}),
                     rgba(${fill.color.r * 255}, ${fill.color.g * 255}, ${
-                        fill.color.b * 255
-                    }, ${fill.opacity}))`
-                );
+                            fill.color.b * 255
+                        }, ${fill.opacity}))`
+                    );
+                }
             }
 
             background = `background-image: ${fills.reverse().join(", ")};`;
@@ -229,16 +231,36 @@
     }
 
     function openMenu(event, style) {
+        closeMenu();
         var rect = event.currentTarget.getBoundingClientRect();
         event.currentTarget.classList.toggle("blue-bg");
+
         mousePosX = event.clientX - rect.left;
         mousePosY = event.clientY - rect.top;
+
+        if (mousePosX > 140) {
+            mousePosX = 136;
+            console.log("off screen");
+        }
+        if (rect.top > 231) {
+            mousePosY = -40;
+            console.log("off screen");
+        }
 
         menu.classList.toggle("show");
     }
 
     function closeMenu() {
-        menu.classList.remove("show");
+        var menus = document.getElementById("styles").querySelectorAll(".menu");
+
+        for (var menu of menus) {
+            // console.log(menu);
+            menu.classList.remove("show");
+            menu.parentNode.parentNode.classList.remove("blue-bg");
+            // console.log(menu.parentNode.parentNode).classList.remove("blue-bg");
+            // menu.parent
+        }
+
         // listItem.classList.remove("blue-bg");
         // var editInputs = event.currentTarget.getElementsByClassName("editName");
         // for (let i = 0; i < editInputs.length; i++) {
@@ -294,7 +316,7 @@
         box-shadow: 0px 2px 7px rgba(0, 0, 0, 0.15),
             0px 5px 17px rgba(0, 0, 0, 0.2);
         border-radius: 2px;
-        width: 90px;
+        width: 100px;
     }
 
     .menu > span {
@@ -306,7 +328,7 @@
         user-select: none;
     }
 
-    .menu > span:hover {
+    .menu > span:not(.divider):hover {
         background-color: var(--blue);
         color: white;
     }
@@ -360,6 +382,12 @@
     :global(.blue-bg) {
         background-color: #daebf7;
     }
+    .divider {
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        display: block;
+        margin-top: 8px;
+        margin-bottom: 8px;
+    }
 </style>
 
 <svelte:body on:click={onPageClick} />
@@ -394,11 +422,14 @@
             bind:this={menu}
             style="left: {mousePosX}px; top: {mousePosY}px">
             <div class="triangle" />
-            <!-- <span on:click={editLayerStyle(style.id)}>Edit Style</span> -->
-            <!-- <span on:click={updateLayerStyle(style.id)}>Update</span> -->
             <span on:click={updateInstances(style.id)}>Refresh</span>
+            <span on:click={editLayerStyle(style.id)}>Edit</span>
+
+            <!-- <span on:click={updateLayerStyle(style.id)}>Update</span> -->
+
             <!-- <a on:click={renameStyle(style.id, 'test')}>Rename</a> -->
             <span on:click={editStyle(event, style)}>Rename</span>
+            <span class="divider" />
             <span on:click={removeStyle(style.id)}>Delete</span>
         </div>
     </Type>

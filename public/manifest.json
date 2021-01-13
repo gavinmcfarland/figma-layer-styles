@@ -6,27 +6,8 @@
   "ui": "index.html",
   "menu": [
     {
-      "name": "Show Styles",
+      "name": "Show Layer Styles",
       "command": "showStyles"
-    },
-    {
-      "name": "Create Styles",
-      "command": "createStyles"
-    },
-    {
-      "name": "Update Styles",
-      "command": "updateStyles"
-    },
-    {
-      "name": "Clear Styles",
-      "command": "clearStyles"
-    },
-    {
-      "name": "Copy Styles",
-      "command": "copyProperties"
     }
-  ],
-  "relaunchButtons": [
-    {"command": "updateStyles", "name": "Update Styles", "multipleSelection": true}
   ]
 }

@@ -1,11 +1,4 @@
-// This plugin will open a modal to prompt the user to enter a number, and
-// it will then create that many rectangles on the screen.
-
-// This file holds the main code for the plugins. It has access to the *document*.
-// You can access browser APIs in the <script> tag inside "ui.html" which has a
-// full browser enviroment (see documentation).
-
-const nodeProperties = [
+const nodeProps: string[] = [
 	'id',
 	'parent',
 	'name',
@@ -68,79 +61,78 @@ const nodeProperties = [
 	'paddingTop',
 	'paddingBottom',
 	'itemSpacing',
-	'horizontalPadding',
-	'verticalPadding',
+	// 'horizontalPadding',
+	// 'verticalPadding',
 	'layoutGrids',
 	'gridStyleId',
 	'clipsContent',
 	'guides'
 ]
 
-function clone(val) {
-	return JSON.parse(JSON.stringify(val))
-}
+const readonly: string[] = [
+	'id',
+	'parent',
+	'removed',
+	'children',
+	'absoluteTransform',
+	'width',
+	'height',
+	'overlayPositionType',
+	'overlayBackground',
+	'overlayBackgroundInteraction',
+	'reactions',
+	'remote',
+	'key',
+	'type'
+]
 
-// Testing with a function which copies only matching properties
-function prune(source, target, includeArray?, excludeArray?) {
-	var temp = {}
-	var array
+const instanceProps: string[] = [
+	'rotation',
+	'constrainProportions'
+]
 
-	if (includeArray) {
-		array = includeArray
+const defaults: string[] = [
+	'name',
+	'guides',
+	'description',
+	'remote',
+	'key',
+	'reactions',
+	'x',
+	'y',
+	'exportSettings',
+	'expanded',
+	'isMask',
+	'exportSettings',
+	'overflowDirection',
+	'numberOfFixedChildren',
+	'constraints',
+	'relativeTransform'
+]
+
+function copyPasteProps(source, target?, { include, exclude }: Options = {}) {
+	let allowlist: string[] = nodeProps.filter(function (el) {
+		return !defaults.concat(readonly).includes(el)
+	})
+
+	if (include) {
+		allowlist = allowlist.concat(include)
 	}
-	else if (excludeArray) {
-		array = nodeProperties.filter(function (el) {
-			return !excludeArray.includes(el);
+
+	if (exclude) {
+		allowlist = allowlist.filter(function (el) {
+			return !exclude.includes(el)
 		})
 	}
-	else {
-		array = nodeProperties
+
+	if (target?.parent.type === "INSTANCE") {
+		allowlist = allowlist.filter(function (el) {
+			return !instanceProps.includes(el)
+		})
 	}
 
-	for (var key1 in target) {
-		for (var key2 in source) {
-			if (array.includes(key2)) {
-				if (key1 === key2) {
-					temp[key2] = source[key2];
-				}
-			}
-
-		}
-	}
-	return temp;
-}
-
-function nodeToObject(node: any, withoutRelations?: boolean) {
-	const props = Object.entries(Object.getOwnPropertyDescriptors(node.__proto__))
-	const blacklist = ['parent', 'children', 'removed', 'masterComponent']
-	const obj: any = { id: node.id, type: node.type }
-	for (const [name, prop] of props) {
-		if (prop.get && !blacklist.includes(name)) {
-			try {
-				if (typeof obj[name] === 'symbol') {
-					obj[name] = 'Mixed'
-				} else {
-					obj[name] = prop.get.call(node)
-				}
-			} catch (err) {
-				obj[name] = undefined
-			}
-		}
-	}
-	if (node.parent && !withoutRelations) {
-		obj.parent = { id: node.parent.id, type: node.parent.type }
-	}
-	if (node.children && !withoutRelations) {
-		obj.children = node.children.map((child: any) => nodeToObject(child, withoutRelations))
-	}
-	if (node.masterComponent && !withoutRelations) {
-		obj.masterComponent = nodeToObject(node.masterComponent, withoutRelations)
-	}
-	return obj
-}
-
-function cloneNode(val) {
-	const type = typeof val
+	const val = source
+	const type = typeof source
 
 	if (
 		type === 'undefined' ||
@@ -148,90 +140,128 @@ function cloneNode(val) {
 		type === 'string' ||
 		type === 'boolean' ||
 		type === 'symbol' ||
-		val === null
+		source === null
 	) {
 		return val
 	} else if (type === 'object') {
 		if (val instanceof Array) {
-			return val.map(clone)
+			var newArray = []
+			for (const key1 in source) {
+				newArray.push(clone(source[key1]))
+			}
+			return newArray
+			// return val.map(copyPasteProps)
 		} else if (val instanceof Uint8Array) {
 			return new Uint8Array(val)
 		} else {
-			const o = {}
-			for (const key in val) {
-				o[key] = cloneNode(val[key])
+			const o: any = {}
+			for (const key1 in val) {
+				if (target) {
+					for (const key2 in target) {
+						if (allowlist.includes(key2)) {
+							if (key1 === key2) {
+								// if (Array.isArray(val[key1]) && val[key1].length === 0) {
+
+								// }
+								// else {
+
+								// 	if (key1 === "fills") {
+								// 		console.log("fill opacity is less than 1")
+								// 	}
+								// 	else {
+								o[key1] = copyPasteProps(val[key1], target)
+								// 	}
+
+								// }
+							}
+						}
+					}
+				} else {
+					o[key1] = copyPasteProps(val[key1])
+				}
 			}
-			return o
+
+			if (target) {
+				!o.fillStyleId && o.fills ? null : delete o.fills
+				!o.strokeStyleId && o.strokes ? null : delete o.strokes
+				!o.backgroundStyleId && o.backgrounds ? null : delete o.backgrounds
+
+				if (o.cornerRadius !== figma.mixed) {
+					delete o.topLeftRadius
+					delete o.topRightRadius
+					delete o.bottomLeftRadius
+					delete o.bottomRightRadius
+				}
+				else {
+					delete o.cornerRadius
+				}
+
+				return Object.assign(target, o)
+			}
+			else {
+				return o
+			}
+
 		}
 	}
 
 	throw 'unknown'
 }
 
-// function copy(source) {
-// 	var temp = {}
-// 	for (var key1 in source) {
-// 		temp[key1] = source[key1];
-// 	}
-// 	return temp;
-// }
+function clone(val) {
+	return JSON.parse(JSON.stringify(val))
+}
 
-function copyPaste(source, target?) {
+interface Options {
+	include?: string[]
+	exclude?: string[]
+}
 
-	// Description: Copies properties from node to another. When no target is specificed properties are copied to an object.
-	var temp
-	var readOnlyProps = [
-		'id',
-		'parent',
-		'removed',
-		'children',
-		'absoluteTransform',
-		'width',
-		'height',
-		'overlayPositionType',
-		'overlayBackground',
-		'overlayBackgroundInteraction',
-		'reactions',
-		'remote',
-		'key',
-		'type'
-	]
+const styleProps = [
+	// 'constrainProportions',
+	// 'layoutAlign',
+	// 'layoutGrow',
+	'opacity',
+	'blendMode',
+	'effects',
+	'effectStyleId',
+	// 'expanded',
+	'backgrounds',
+	'backgroundStyleId',
+	'fills',
+	'strokes',
+	'strokeWeight',
+	'strokeMiterLimit',
+	'strokeAlign',
+	'strokeCap',
+	'strokeJoin',
+	'dashPattern',
+	'fillStyleId',
+	'strokeStyleId',
+	'cornerRadius',
+	'cornerSmoothing',
+	'topLeftRadius',
+	'topRightRadius',
+	'bottomLeftRadius',
+	'bottomRightRadius',
+	// 'layoutMode',
+	// 'primaryAxisSizingMode',
+	// 'counterAxisSizingMode',
+	// 'primaryAxisAlignItems',
+	// 'counterAxisAlignItems',
+	'paddingLeft',
+	'paddingRight',
+	'paddingTop',
+	'paddingBottom',
+	'itemSpacing',
+	'layoutGrids',
+	'gridStyleId'
+	// 'clipsContent',
+	// 'guides'
+]
 
-	var exclude = [
-		"name",
-		"removed",
-		"visible",
-		"reactions",
-		"locked",
-		"x",
-		"y",
-		"rotation",
-		"constrainProportions",
-		"exportSettings",
-		"relativeTransform",
-		"constraints"
-	]
-
-	exclude = exclude.concat(readOnlyProps)
-
-	if (!target) {
-		temp = nodeToObject(source)
-	}
-	else {
-		temp = prune(source, target, null, exclude)
-	}
-
-
-
-	if (temp.cornerRadius === figma.mixed) {
-		delete temp.cornerRadius
-	}
-
-
-
-	if (target) Object.assign(target, temp)
-
-	return temp
+function copyPasteStyle(source, target?) {
+	return copyPasteProps(source, target, { include: styleProps, exclude: ['autoRename', 'characters', 'fontName', 'fontSize', 'rotation'] })
 }
 
 function pageId(node) {
@@ -258,60 +288,6 @@ function centerInViewport(node) {
 	// Position newly created table in center of viewport
 	node.x = figma.viewport.center.x - (node.width / 2)
 	node.y = figma.viewport.center.y - (node.height / 2)
-}
-
-function copyProperties(source) {
-	var styles = {}
-
-
-	styles.strokes = source.strokes
-	styles.fillStyleId = source.fillStyleId
-	styles.fills = source.fills
-
-	styles.strokeStyleId = source.strokeStyleId
-	styles.strokeWeight = source.strokeWeight
-	styles.strokeAlign = source.strokeAlign
-	styles.strokeCap = source.strokeCap
-	styles.strokeJoin = source.strokeJoin
-	styles.strokeMiterLimit = source.strokeMiterLimit
-
-	if (styles.type !== "INSTANCE") {
-		if (source.cornerRadius === figma.mixed) {
-			styles.topLeftRadius = source.topLeftRadius
-			styles.topRightRadius = source.topRightRadius
-			styles.bottomLeftRadius = source.bottomLeftRadius
-			styles.bottomRightRadius = source.bottomRightRadius
-		}
-		else {
-			styles.cornerRadius = source.cornerRadius
-		}
-
-	}
-
-	styles.effects = source.effects
-
-
-	if (styles.type === "FRAME" || styles.type === "COMPONENT") {
-		styles.horizontalPadding = source.horizontalPadding
-		styles.verticalPadding = source.verticalPadding
-		styles.itemSpacing = source.itemSpacing
-
-		styles.layoutMode = source.layoutMode
-		styles.counterAxisSizingMode = source.counterAxisSizingMode
-
-		styles.clipsContent = source.clipsContent
-
-		styles.gridStyleId = source.gridStyleId
-		styles.layoutGrids = source.layoutGrids
-		styles.guides = source.guides
-	}
-
-
-
-	styles.dashPattern = source.dashPattern
-
-	styles.effects = clone(source.effects)
-	return styles
 }
 
 function getInstances(id?) {
@@ -344,15 +320,18 @@ function addLayerStyle(node) {
 
 	var layerStyles: any = getLayerStyles()
 
-	// for (let i = 0; i < layerStyles.length; i++) {
-	// 	var layerStyle = layerStyles[i]
+	for (let i = 0; i < layerStyles.length; i++) {
+		var layerStyle = layerStyles[i]
 
-	// 	if (layerStyle.id === node.id) {
-	// 		console.log("Layer style already exists")
-	// 		return
-	// 	}
-	// }
-	var layerStyle = { id: node.id, node: copyPaste(node), name: node.name }
+		if (layerStyle.id === node.id) {
+			console.log("Layer style already exists")
+			figma.notify("Layer style already exists")
+			return
+		}
+	}
+
+
+	var layerStyle = { id: node.id, node: copyPasteStyle(node), name: node.name }
 
 	layerStyles.push(layerStyle)
 
@@ -384,8 +363,6 @@ function updateLayerStyle(id, name?, properties?, newId?) {
 
 function getLayerStyles(id?) {
 	var styles: any = figma.root.getPluginData("styles")
-
-
 
 	if (styles !== "") {
 		styles = JSON.parse(styles)
@@ -456,12 +433,12 @@ function updateInstances(selection, id?) {
 
 		if (source) {
 			var layerStyle = source
-			updateLayerStyle(styleId, null, copyPaste(layerStyle));
-			copyPaste(layerStyle, node)
+			updateLayerStyle(styleId, null, copyPasteStyle(layerStyle));
+			copyPasteStyle(layerStyle, node)
 		}
 		else {
 			var layerStyle = getLayerStyles(styleId).node
-			copyPaste(layerStyle, node)
+			copyPasteStyle(layerStyle, node)
 			console.log("Original node can't be found")
 		}
 	}
@@ -482,7 +459,7 @@ function createStyles(selection) {
 			var node = selection[i]
 			node.setPluginData("styleId", node.id)
 			// var target = pasteProperties(figma.createFrame(), styles)
-			node.setRelaunchData({ updateStyles: 'Update from component styles' });
+			// node.setRelaunchData({ updateStyles: 'Refresh layers connected to this style' });
 			// figma.viewport.scrollAndZoomIntoView([target]);
 
 			addLayerStyle(node)
@@ -510,11 +487,11 @@ function applyStyle(selection, styleId) {
 
 			var layerStyle = source
 
-			copyPaste(layerStyle, node)
+			copyPasteStyle(layerStyle, node)
 		}
 		else {
 			var layerStyle = getLayerStyles(styleId).node
-			copyPaste(layerStyle, node)
+			copyPasteStyle(layerStyle, node)
 			console.log("Original node can't be found")
 		}
 
@@ -562,6 +539,7 @@ function postMessage() {
 
 
 
+// This updates preview inside layer styles list
 var thisNode;
 
 figma.on("selectionchange", () => {
@@ -583,12 +561,12 @@ figma.on("selectionchange", () => {
 })
 
 
-// Trying to create a preview for updating layer style in list
+
 function update(thisNode) {
 
 	if (thisNode) {
 		var layerStyleId = thisNode.getPluginData("styleId")
-		var properties = copyPaste(thisNode)
+		var properties = copyPasteStyle(thisNode)
 		updateLayerStyle(layerStyleId, null, properties);
 		postMessage()
 	}
@@ -620,36 +598,6 @@ if (figma.command === "showStyles") {
 	// callback. The callback will be passed the "pluginMessage" property of the
 	// posted message.
 	figma.ui.onmessage = msg => {
-		// One way of distinguishing between different types of messages sent from
-		// your HTML page is to use an object with a "type" property like this.
-		if (msg.type === 'create-shapes') {
-
-			const nodes: SceneNode[] = [];
-
-			for (let i = 0; i < msg.count; i++) {
-
-				var shape;
-
-				if (msg.shape === 'rectangle') {
-					shape = figma.createRectangle();
-				} else if (msg.shape === 'triangle') {
-					shape = figma.createPolygon();
-				} else {
-					shape = figma.createEllipse();
-				}
-
-				shape.x = i * 150;
-				shape.fills = [{ type: 'SOLID', color: { r: 1, g: 0.5, b: 0 } }];
-				figma.currentPage.appendChild(shape);
-				nodes.push(shape);
-			}
-
-			figma.currentPage.selection = nodes;
-			figma.viewport.scrollAndZoomIntoView(nodes);
-			figma.closePlugin();
-		}
-
-
 
 		if (msg.type === "add-style") {
 			createStyles(figma.currentPage.selection)
@@ -668,7 +616,7 @@ if (figma.command === "showStyles") {
 
 		if (msg.type === "update-style") {
 			var node = figma.currentPage.selection[0]
-			var properties = copyPaste(node)
+			var properties = copyPasteStyle(node)
 			updateLayerStyle(msg.id, null, properties, node.id)
 			figma.currentPage.selection[0].setPluginData("styleId", node.id)
 			postMessage()
@@ -684,9 +632,10 @@ if (figma.command === "showStyles") {
 			}
 			else {
 				node = figma.createFrame()
-				var properties = getLayerStyles(msg.id).node
-				copyPaste(properties, node)
+				var properties = getLayerStyles(msg.id)
+				copyPasteStyle(properties.node, node)
 				centerInViewport(node)
+				node.name = `${properties.name}`
 				figma.viewport.scrollAndZoomIntoView([node])
 				figma.viewport.zoom = 0.25
 				// figma.viewport.scrollAndZoomIntoView([node])
@@ -736,6 +685,6 @@ if (figma.command === "clearStyles") {
 
 
 if (figma.command === "copyProperties") {
-	copyPaste(figma.currentPage.selection[0])
+	copyPasteStyle(figma.currentPage.selection[0])
 	// figma.closePlugin()
 }
