@@ -261,7 +261,15 @@ const styleProps = [
 ]
 
 function copyPasteStyle(source, target?) {
-	return copyPasteProps(source, target, { include: styleProps, exclude: ['autoRename', 'characters', 'fontName', 'fontSize', 'rotation'] })
+	return copyPasteProps(source, target, {
+		include: styleProps, exclude: ['autoRename', 'characters', 'fontName', 'fontSize', 'rotation', 'primaryAxisSizingMode',
+			'counterAxisSizingMode',
+			'primaryAxisAlignItems',
+			'counterAxisAlignItems',
+			'constrainProportions',
+			'layoutAlign',
+			'layoutGrow']
+	})
 }
 
 function pageId(node) {
@@ -290,22 +298,17 @@ function centerInViewport(node) {
 	node.y = figma.viewport.center.y - (node.height / 2)
 }
 
-function getInstances(id?) {
+function sortNodesByPosition(nodes) {
 
-	var array = figma.root.getPluginData("layerStyle" + id)
+	var result = nodes.map((x) => x)
 
-	if (array !== "") {
-		array = JSON.parse(array)
-	}
-	else {
-		array = []
-	}
+	result.sort((current, next) => current.x - next.x)
 
-	array.push(id)
+	return result.sort((current, next) => current.y - next.y);
+}
 
-	figma.root.setPluginData("layerStyle" + id, JSON.stringify(array));
-
-	return array
+function getInstances(styleId?) {
+	return figma.root.findAll((node) => node.getPluginData("styleId") === styleId)
 }
 
 function addInstance(styleId, nodeId) {
@@ -316,6 +319,7 @@ function addInstance(styleId, nodeId) {
 	figma.root.setPluginData("layerStyle" + styleId, JSON.stringify(instances))
 }
 
+// TODO: Need to add a limit, incase user tries to add too many layer styles at once
 function addLayerStyle(node) {
 
 	var layerStyles: any = getLayerStyles()
@@ -329,6 +333,7 @@ function addLayerStyle(node) {
 			return
 		}
 	}
+
 
 
 	var layerStyle = { id: node.id, node: copyPasteStyle(node), name: node.name }
@@ -455,6 +460,7 @@ function clearLayerStyle() {
 
 function createStyles(selection) {
 	if (selection.length > 0) {
+		selection = sortNodesByPosition(selection)
 		for (var i = 0; i < selection.length; i++) {
 			var node = selection[i]
 			node.setPluginData("styleId", node.id)
@@ -540,6 +546,7 @@ function postMessage() {
 
 
 // This updates preview inside layer styles list
+// TODO: Need to be careful if something happens to node while it's being watched, for example if it's deleted
 var thisNode;
 
 figma.on("selectionchange", () => {
@@ -632,6 +639,7 @@ if (figma.command === "showStyles") {
 			}
 			else {
 				node = figma.createFrame()
+				var newStyleId = node.id
 				var properties = getLayerStyles(msg.id)
 				copyPasteStyle(properties.node, node)
 				centerInViewport(node)
@@ -640,10 +648,22 @@ if (figma.command === "showStyles") {
 				figma.viewport.zoom = 0.25
 				// figma.viewport.scrollAndZoomIntoView([node])
 
+
+
 				// Set as the new master layer style
 				node.setPluginData("styleId", node.id)
-				// TODO: Needs to update layer style with new style ID and I think update all connected frames with new style id
+
+
 				updateLayerStyle(msg.id, null, null, node.id)
+
+				// Update instances with new style id
+				var instances = getInstances(msg.id)
+
+				console.log(instances)
+				instances.map((node) => {
+					node.setPluginData("styleId", newStyleId)
+				})
+
 				figma.currentPage.selection = [node]
 			}
 			postMessage()

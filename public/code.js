@@ -240,7 +240,15 @@ const styleProps = [
     // 'guides'
 ];
 function copyPasteStyle(source, target) {
-    return copyPasteProps(source, target, { include: styleProps, exclude: ['autoRename', 'characters', 'fontName', 'fontSize', 'rotation'] });
+    return copyPasteProps(source, target, {
+        include: styleProps, exclude: ['autoRename', 'characters', 'fontName', 'fontSize', 'rotation', 'primaryAxisSizingMode',
+            'counterAxisSizingMode',
+            'primaryAxisAlignItems',
+            'counterAxisAlignItems',
+            'constrainProportions',
+            'layoutAlign',
+            'layoutGrow']
+    });
 }
 function pageNode(node) {
     if (node.parent.type === "PAGE") {
@@ -255,6 +263,15 @@ function centerInViewport(node) {
     node.x = figma.viewport.center.x - (node.width / 2);
     node.y = figma.viewport.center.y - (node.height / 2);
 }
+function sortNodesByPosition(nodes) {
+    var result = nodes.map((x) => x);
+    result.sort((current, next) => current.x - next.x);
+    return result.sort((current, next) => current.y - next.y);
+}
+function getInstances(styleId) {
+    return figma.root.findAll((node) => node.getPluginData("styleId") === styleId);
+}
+// TODO: Need to add a limit, incase user tries to add too many layer styles at once
 function addLayerStyle(node) {
     var layerStyles = getLayerStyles();
     for (let i = 0; i < layerStyles.length; i++) {
@@ -352,6 +369,7 @@ function clearLayerStyle() {
 }
 function createStyles(selection) {
     if (selection.length > 0) {
+        selection = sortNodesByPosition(selection);
         for (var i = 0; i < selection.length; i++) {
             var node = selection[i];
             node.setPluginData("styleId", node.id);
@@ -415,6 +433,7 @@ function postMessage() {
     figma.ui.postMessage(message);
 }
 // This updates preview inside layer styles list
+// TODO: Need to be careful if something happens to node while it's being watched, for example if it's deleted
 var thisNode;
 figma.on("selectionchange", () => {
     console.log("Selection changed");
@@ -485,6 +504,7 @@ if (figma.command === "showStyles") {
             }
             else {
                 node = figma.createFrame();
+                var newStyleId = node.id;
                 var properties = getLayerStyles(msg.id);
                 copyPasteStyle(properties.node, node);
                 centerInViewport(node);
@@ -494,8 +514,13 @@ if (figma.command === "showStyles") {
                 // figma.viewport.scrollAndZoomIntoView([node])
                 // Set as the new master layer style
                 node.setPluginData("styleId", node.id);
-                // TODO: Needs to update layer style with new style ID and I think update all connected frames with new style id
                 updateLayerStyle(msg.id, null, null, node.id);
+                // Update instances with new style id
+                var instances = getInstances(msg.id);
+                console.log(instances);
+                instances.map((node) => {
+                    node.setPluginData("styleId", newStyleId);
+                });
                 figma.currentPage.selection = [node];
             }
             postMessage();
