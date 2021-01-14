@@ -1,4 +1,5 @@
 // TODO: Check and update layer style previews when UI opens
+// TODO: When editing a layer style, check that the node is a component and if it's been deleted by user
 
 const nodeProps: string[] = [
 	'id',
@@ -111,6 +112,22 @@ const defaults: string[] = [
 	'constraints',
 	'relativeTransform'
 ]
+
+function nodeRemovedByUser(node) {
+
+	if (node) {
+		if (node.parent === null || node.parent.parent === null) {
+			return false
+		}
+		else {
+			return true
+		}
+	}
+	else {
+		return true
+	}
+
+}
 
 function copyPasteProps(source, target?, { include, exclude }: Options = {}) {
 	let allowlist: string[] = nodeProps.filter(function (el) {
@@ -641,7 +658,7 @@ if (figma.command === "showStyles") {
 
 		if (msg.type === "edit-layer-style") {
 			var node = figma.getNodeById(msg.id)
-			if (node) {
+			if (nodeRemovedByUser(node)) {
 				figma.viewport.scrollAndZoomIntoView([node])
 				figma.viewport.zoom = 0.25
 				figma.currentPage = pageNode(node)
