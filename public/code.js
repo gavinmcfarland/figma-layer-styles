@@ -389,6 +389,7 @@ function applyLayerStyle(selection, styleId) {
     for (let i = 0; i < selection.length; i++) {
         var node = selection[i];
         node.setPluginData("styleId", styleId);
+        node.setRelaunchData({ detachLayerStyle: 'Removes association with layer style' });
         // var styleId = node.getPluginData("styleId")
         // Look for node with matching styleID
         var source = figma.getNodeById(styleId);
@@ -428,6 +429,10 @@ function removeLayerStyle(styleId) {
         }
     });
     // TODO: Remove relaunch data
+}
+function detachLayerStyle(node) {
+    node.setPluginData("styleId", "");
+    node.setRelaunchData({});
 }
 function postMessage() {
     var styles = getLayerStyles();
@@ -553,3 +558,12 @@ if (figma.command === "copyProperties") {
     copyPasteStyle(figma.currentPage.selection[0]);
     // figma.closePlugin()
 }
+if (figma.command === "detachLayerStyle") {
+    for (var i = 0; i < figma.currentPage.selection.length; i++) {
+        var node = figma.currentPage.selection[i];
+        detachLayerStyle(node);
+    }
+    figma.notify("Layer style detached");
+    figma.closePlugin();
+}
+//# sourceMappingURL=code.js.map

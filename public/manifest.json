@@ -9,5 +9,8 @@
       "name": "Show Layer Styles",
       "command": "showStyles"
     }
-  ]
+  ],
+  "relaunchButtons": [
+      {"command": "detachLayerStyle", "name": "Detach Layer Style", "multipleSelection": true}
+    ]
 }
