@@ -262,7 +262,8 @@ function copyPasteStyle(source, target) {
             'counterAxisAlignItems',
             'constrainProportions',
             'layoutAlign',
-            'layoutGrow']
+            'layoutGrow',
+            'layoutMode']
     });
 }
 function pageNode(node) {
@@ -580,4 +581,3 @@ if (figma.command === "detachLayerStyle") {
     figma.notify("Layer style detached");
     figma.closePlugin();
 }
-//# sourceMappingURL=code.js.map

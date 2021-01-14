@@ -287,7 +287,8 @@ function copyPasteStyle(source, target?) {
 			'counterAxisAlignItems',
 			'constrainProportions',
 			'layoutAlign',
-			'layoutGrow']
+			'layoutGrow',
+			'layoutMode']
 	})
 }
 
