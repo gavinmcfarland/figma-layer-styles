@@ -1,3 +1,5 @@
+// TODO: Check and update layer style previews when UI opens
+
 const nodeProps: string[] = [
 	'id',
 	'parent',
@@ -476,7 +478,7 @@ function createStyles(selection) {
 	}
 }
 
-function applyStyle(selection, styleId) {
+function applyLayerStyle(selection, styleId) {
 	// TODO: If node already has styleId and it matches it's node.id this means it is the master node for another style. Not sure how to fix this, as other style will look to this node for it. Possible fix is to change style ID of node.
 
 
@@ -502,6 +504,8 @@ function applyStyle(selection, styleId) {
 		}
 
 	}
+
+	figma.notify("Layer style applied")
 }
 
 function removeLayerStyle(styleId) {
@@ -670,7 +674,7 @@ if (figma.command === "showStyles") {
 		}
 
 		if (msg.type === "apply-style") {
-			applyStyle(figma.currentPage.selection, msg.id)
+			applyLayerStyle(figma.currentPage.selection, msg.id)
 		}
 
 		if (msg.type === "remove-style") {
