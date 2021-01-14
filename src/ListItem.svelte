@@ -88,20 +88,30 @@
 
                 if (effect.type === "DROP_SHADOW") {
                     boxShadows.push(
-                        `drop-shadow(${effect.offset.x / 2}px ${
+                        `${effect.offset.x / 2}px ${effect.offset.y / 2}px ${
+                            effect.radius / 2
+                        }px rgba(${effect.color.r * 255}, ${
+                            effect.color.g * 255
+                        }, ${effect.color.b * 255}, ${effect.color.a})`
+                    );
+                }
+
+                if (effect.type === "INNER_SHADOW") {
+                    boxShadows.push(
+                        `inset ${effect.offset.x / 2}px ${
                             effect.offset.y / 2
                         }px ${effect.radius / 2}px rgba(${
                             effect.color.r * 255
                         }, ${effect.color.g * 255}, ${effect.color.b * 255}, ${
                             effect.color.a
-                        }))`
+                        })`
                     );
                 }
             }
 
             // filter: drop-shadow(30px 10px 4px #4444dd)
 
-            boxShadow = `filter: ${boxShadows.join(" ")};`;
+            boxShadow = `box-shadow: ${boxShadows.join(" ")};`;
         }
 
         string = `${background} ${border} ${borderRadius} ${boxShadow}`;
