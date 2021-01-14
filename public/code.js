@@ -113,10 +113,10 @@ const defaults = [
 function nodeRemovedByUser(node) {
     if (node) {
         if (node.parent === null || node.parent.parent === null) {
-            return false;
+            return true;
         }
         else {
-            return true;
+            return false;
         }
     }
     else {
@@ -517,7 +517,7 @@ if (figma.command === "showStyles") {
         }
         if (msg.type === "edit-layer-style") {
             var node = figma.getNodeById(msg.id);
-            if (nodeRemovedByUser(node)) {
+            if (!nodeRemovedByUser(node)) {
                 figma.viewport.scrollAndZoomIntoView([node]);
                 figma.viewport.zoom = 0.25;
                 figma.currentPage = pageNode(node);
@@ -580,3 +580,4 @@ if (figma.command === "detachLayerStyle") {
     figma.notify("Layer style detached");
     figma.closePlugin();
 }
+//# sourceMappingURL=code.js.map
