@@ -1,7 +1,5 @@
 'use strict';
 
-// TODO: Check and update layer style previews when UI opens
-// TODO: When editing a layer style, check that the node is a component and if it's been deleted by user
 const nodeProps = [
     'id',
     'parent',
@@ -110,18 +108,8 @@ const defaults = [
     'constraints',
     'relativeTransform'
 ];
-function nodeRemovedByUser(node) {
-    if (node) {
-        if (node.parent === null || node.parent.parent === null) {
-            return true;
-        }
-        else {
-            return false;
-        }
-    }
-    else {
-        return true;
-    }
+function clone(val) {
+    return JSON.parse(JSON.stringify(val));
 }
 function copyPasteProps(source, target, { include, exclude } = {}) {
     let allowlist = nodeProps.filter(function (el) {
@@ -209,8 +197,21 @@ function copyPasteProps(source, target, { include, exclude } = {}) {
     }
     throw 'unknown';
 }
-function clone(val) {
-    return JSON.parse(JSON.stringify(val));
+
+// TODO: Check and update layer style previews when UI opens
+// TODO: When editing a layer style, check that the node is a component and if it's been deleted by user
+function nodeRemovedByUser(node) {
+    if (node) {
+        if (node.parent === null || node.parent.parent === null) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    else {
+        return true;
+    }
 }
 const styleProps = [
     // 'constrainProportions',

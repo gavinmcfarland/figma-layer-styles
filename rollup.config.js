@@ -71,6 +71,7 @@ export default [{
 	output: {
 		file: 'public/code.js',
 		format: 'cjs',
+		// format: 'iife',
 		name: 'code'
 	},
 	plugins: [
