@@ -42,19 +42,6 @@
 	//the select menu, its value is bound to the primary buttons disabled prop
 	// $: disabled = selectedShape === null;
 
-	function createShapes() {
-		parent.postMessage(
-			{
-				pluginMessage: {
-					type: "create-shapes",
-					count: count,
-					shape: selectedShape.value,
-				},
-			},
-			"*"
-		);
-	}
-
 	function addStyle() {
 		parent.postMessage(
 			{
@@ -76,6 +63,55 @@
 		styles = await event.data.pluginMessage;
 	}
 </script>
+
+<svelte:window on:message={onLoad}/>
+
+<!-- <div class="bt" style="display: hidden" /> -->
+
+<div class="wrapper p-xxsmall">
+	<!-- <Label>Shape</Label>
+	<SelectMenu bind:menuItems bind:value={selectedShape} class="mb-xxsmall" />
+
+	<Label>Count</Label>
+	<Input iconText="#" bind:value={count} class="mb-xxsmall" /> -->
+	<Styles {styles} />
+
+	<div class="action-bar flex p-xxsmall bt">
+		<!-- <Button on:click={cancel} variant="secondary" class="mr-xsmall">
+			Cancel
+		</Button> -->
+		<!-- <Button on:click={createShapes} bind:disabled>Create shapes</Button> -->
+		<!-- <Button on:click={addStyle}>Add style</Button> -->
+		<IconButton
+			class="IconButton"
+			on:click={addStyle}
+			iconName={IconPlus}
+		/>
+	</div>
+</div>
+<!-- {#if showRename}
+	<div class="editName wrapper p-xxsmall" transition:fade={{ duration: 100 }}>
+		<Input bind:value={styleBeingEdited.name} class="mb-xxsmall" />
+
+		<div class="action-bar flex p-xxsmall bt">
+			<Button
+				variant="secondary"
+				on:click={() => {
+					showRename = false;
+				}}>
+				Cancel
+			</Button>
+			<Button
+				class="ml-xxsmall"
+				on:click={() => {
+					renameStyle(styleBeingEdited.id, styleBeingEdited.name);
+					showRename = false;
+				}}>
+				Rename
+			</Button>
+		</div>
+	</div>
+{/if} -->
 
 <style>
 	/* Add additional global or scoped styles here */
@@ -127,51 +163,3 @@
 		display: block !important;
 	}
 </style>
-
-<svelte:window on:message={onLoad} />
-
-<!-- <div class="bt" style="display: hidden" /> -->
-
-<div class="wrapper p-xxsmall" transition:fade={{ duration: 100 }}>
-	<!-- <Label>Shape</Label>
-	<SelectMenu bind:menuItems bind:value={selectedShape} class="mb-xxsmall" />
-
-	<Label>Count</Label>
-	<Input iconText="#" bind:value={count} class="mb-xxsmall" /> -->
-	<Styles {styles} />
-
-	<div class="action-bar flex p-xxsmall bt">
-		<!-- <Button on:click={cancel} variant="secondary" class="mr-xsmall">
-			Cancel
-		</Button> -->
-		<!-- <Button on:click={createShapes} bind:disabled>Create shapes</Button> -->
-		<!-- <Button on:click={addStyle}>Add style</Button> -->
-		<IconButton
-			class="IconButton"
-			on:click={addStyle}
-			iconName={IconPlus} />
-	</div>
-</div>
-<!-- {#if showRename}
-	<div class="editName wrapper p-xxsmall" transition:fade={{ duration: 100 }}>
-		<Input bind:value={styleBeingEdited.name} class="mb-xxsmall" />
-
-		<div class="action-bar flex p-xxsmall bt">
-			<Button
-				variant="secondary"
-				on:click={() => {
-					showRename = false;
-				}}>
-				Cancel
-			</Button>
-			<Button
-				class="ml-xxsmall"
-				on:click={() => {
-					renameStyle(styleBeingEdited.id, styleBeingEdited.name);
-					showRename = false;
-				}}>
-				Rename
-			</Button>
-		</div>
-	</div>
-{/if} -->

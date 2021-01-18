@@ -1,5 +1,105 @@
 'use strict';
 
+/*! *****************************************************************************
+Copyright (c) Microsoft Corporation. All rights reserved.
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy of the
+License at http://www.apache.org/licenses/LICENSE-2.0
+
+THIS CODE IS PROVIDED ON AN *AS IS* BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+KIND, EITHER EXPRESS OR IMPLIED, INCLUDING WITHOUT LIMITATION ANY IMPLIED
+WARRANTIES OR CONDITIONS OF TITLE, FITNESS FOR A PARTICULAR PURPOSE,
+MERCHANTABLITY OR NON-INFRINGEMENT.
+
+See the Apache Version 2.0 License for specific language governing permissions
+and limitations under the License.
+***************************************************************************** */
+
+function __awaiter(thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+}
+
+function createCommonjsModule(fn, module) {
+	return module = { exports: {} }, fn(module, module.exports), module.exports;
+}
+
+var base64Arraybuffer = createCommonjsModule(function (module, exports) {
+/*
+ * base64-arraybuffer
+ * https://github.com/niklasvh/base64-arraybuffer
+ *
+ * Copyright (c) 2012 Niklas von Hertzen
+ * Licensed under the MIT license.
+ */
+(function(){
+
+  var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+  // Use a lookup table to find the index.
+  var lookup = new Uint8Array(256);
+  for (var i = 0; i < chars.length; i++) {
+    lookup[chars.charCodeAt(i)] = i;
+  }
+
+  exports.encode = function(arraybuffer) {
+    var bytes = new Uint8Array(arraybuffer),
+    i, len = bytes.length, base64 = "";
+
+    for (i = 0; i < len; i+=3) {
+      base64 += chars[bytes[i] >> 2];
+      base64 += chars[((bytes[i] & 3) << 4) | (bytes[i + 1] >> 4)];
+      base64 += chars[((bytes[i + 1] & 15) << 2) | (bytes[i + 2] >> 6)];
+      base64 += chars[bytes[i + 2] & 63];
+    }
+
+    if ((len % 3) === 2) {
+      base64 = base64.substring(0, base64.length - 1) + "=";
+    } else if (len % 3 === 1) {
+      base64 = base64.substring(0, base64.length - 2) + "==";
+    }
+
+    return base64;
+  };
+
+  exports.decode =  function(base64) {
+    var bufferLength = base64.length * 0.75,
+    len = base64.length, i, p = 0,
+    encoded1, encoded2, encoded3, encoded4;
+
+    if (base64[base64.length - 1] === "=") {
+      bufferLength--;
+      if (base64[base64.length - 2] === "=") {
+        bufferLength--;
+      }
+    }
+
+    var arraybuffer = new ArrayBuffer(bufferLength),
+    bytes = new Uint8Array(arraybuffer);
+
+    for (i = 0; i < len; i+=4) {
+      encoded1 = lookup[base64.charCodeAt(i)];
+      encoded2 = lookup[base64.charCodeAt(i+1)];
+      encoded3 = lookup[base64.charCodeAt(i+2)];
+      encoded4 = lookup[base64.charCodeAt(i+3)];
+
+      bytes[p++] = (encoded1 << 2) | (encoded2 >> 4);
+      bytes[p++] = ((encoded2 & 15) << 4) | (encoded3 >> 2);
+      bytes[p++] = ((encoded3 & 3) << 6) | (encoded4 & 63);
+    }
+
+    return arraybuffer;
+  };
+})();
+});
+var base64Arraybuffer_1 = base64Arraybuffer.encode;
+var base64Arraybuffer_2 = base64Arraybuffer.decode;
+
 const nodeProps = [
     'id',
     'parent',
@@ -197,9 +297,6 @@ function copyPasteProps(source, target, { include, exclude } = {}) {
     }
     throw 'unknown';
 }
-
-// TODO: Check and update layer style previews when UI opens
-// TODO: When editing a layer style, check that the node is a component and if it's been deleted by user
 function nodeRemovedByUser(node) {
     if (node) {
         if (node.parent === null || node.parent.parent === null) {
@@ -213,6 +310,27 @@ function nodeRemovedByUser(node) {
         return true;
     }
 }
+function pageNode(node) {
+    if (node.parent.type === "PAGE") {
+        return node.parent;
+    }
+    else {
+        return pageNode(node.parent);
+    }
+}
+function centerInViewport(node) {
+    // Position newly created table in center of viewport
+    node.x = figma.viewport.center.x - (node.width / 2);
+    node.y = figma.viewport.center.y - (node.height / 2);
+}
+function sortNodesByPosition(nodes) {
+    var result = nodes.map((x) => x);
+    result.sort((current, next) => current.x - next.x);
+    return result.sort((current, next) => current.y - next.y);
+}
+
+// TODO: Check and update layer style previews when UI opens
+// TODO: When editing a layer style, check that the node is a component and if it's been deleted by user
 const styleProps = [
     // 'constrainProportions',
     // 'layoutAlign',
@@ -267,41 +385,34 @@ function copyPasteStyle(source, target) {
             'layoutMode']
     });
 }
-function pageNode(node) {
-    if (node.parent.type === "PAGE") {
-        return node.parent;
-    }
-    else {
-        return pageNode(node.parent);
-    }
-}
-function centerInViewport(node) {
-    // Position newly created table in center of viewport
-    node.x = figma.viewport.center.x - (node.width / 2);
-    node.y = figma.viewport.center.y - (node.height / 2);
-}
-function sortNodesByPosition(nodes) {
-    var result = nodes.map((x) => x);
-    result.sort((current, next) => current.x - next.x);
-    return result.sort((current, next) => current.y - next.y);
-}
 function getInstances(styleId) {
     return figma.root.findAll((node) => node.getPluginData("styleId") === styleId);
 }
 // TODO: Need to add a limit, incase user tries to add too many layer styles at once
 function addLayerStyle(node) {
-    var layerStyles = getLayerStyles();
-    for (let i = 0; i < layerStyles.length; i++) {
-        var layerStyle = layerStyles[i];
-        if (layerStyle.id === node.id) {
-            console.log("Layer style already exists");
-            figma.notify("Layer style already exists");
-            return;
+    return __awaiter(this, void 0, void 0, function* () {
+        var layerStyles = getLayerStyles();
+        for (let i = 0; i < layerStyles.length; i++) {
+            var layerStyle = layerStyles[i];
+            if (layerStyle.id === node.id) {
+                console.log("Layer style already exists");
+                figma.notify("Layer style already exists");
+                return;
+            }
         }
-    }
-    var layerStyle = { id: node.id, node: copyPasteStyle(node), name: node.name };
-    layerStyles.push(layerStyle);
-    figma.root.setPluginData("styles", JSON.stringify(layerStyles));
+        // Get background image
+        var imageBytes;
+        var base64;
+        if (node.fills[0].type === "IMAGE") {
+            const image = figma.getImageByHash(node.fills[0].imageHash);
+            imageBytes = yield image.getBytesAsync();
+            base64 = `data:image/jpg;base64,${base64Arraybuffer_1(imageBytes)}`;
+        }
+        var layerStyle = { id: node.id, node: copyPasteStyle(node), name: node.name, base64, arrayBuffer: imageBytes };
+        layerStyles.push(layerStyle);
+        console.log(layerStyles);
+        figma.root.setPluginData("styles", JSON.stringify(layerStyles));
+    });
 }
 function updateLayerStyle(id, name, properties, newId) {
     var styles = getLayerStyles();
@@ -385,20 +496,22 @@ function clearLayerStyle() {
     figma.closePlugin();
 }
 function createStyles(selection) {
-    if (selection.length > 0) {
-        selection = sortNodesByPosition(selection);
-        for (var i = 0; i < selection.length; i++) {
-            var node = selection[i];
-            node.setPluginData("styleId", node.id);
-            // var target = pasteProperties(figma.createFrame(), styles)
-            // node.setRelaunchData({ updateStyles: 'Refresh layers connected to this style' });
-            // figma.viewport.scrollAndZoomIntoView([target]);
-            addLayerStyle(node);
+    return __awaiter(this, void 0, void 0, function* () {
+        if (selection.length > 0) {
+            selection = sortNodesByPosition(selection);
+            for (var i = 0; i < selection.length; i++) {
+                var node = selection[i];
+                node.setPluginData("styleId", node.id);
+                // var target = pasteProperties(figma.createFrame(), styles)
+                // node.setRelaunchData({ updateStyles: 'Refresh layers connected to this style' });
+                // figma.viewport.scrollAndZoomIntoView([target]);
+                addLayerStyle(node);
+            }
         }
-    }
-    else {
-        figma.notify("No nodes selected");
-    }
+        else {
+            figma.notify("No layers selected");
+        }
+    });
 }
 function applyLayerStyle(selection, styleId) {
     // TODO: If node already has styleId and it matches it's node.id this means it is the master node for another style. Not sure how to fix this, as other style will look to this node for it. Possible fix is to change style ID of node.
@@ -419,7 +532,12 @@ function applyLayerStyle(selection, styleId) {
             console.log("Original node can't be found");
         }
     }
-    figma.notify("Layer style applied");
+    if (selection.length > 0) {
+        figma.notify("Layer style applied");
+    }
+    else {
+        figma.notify("Please select a layer");
+    }
 }
 function removeLayerStyle(styleId) {
     var styles = getLayerStyles();
@@ -453,6 +571,7 @@ function detachLayerStyle(node) {
 function postMessage() {
     var styles = getLayerStyles();
     var message = styles;
+    // console.log(styles)
     figma.ui.postMessage(message);
 }
 // This updates preview inside layer styles list
@@ -540,7 +659,6 @@ if (figma.command === "showStyles") {
                 updateLayerStyle(msg.id, null, null, node.id);
                 // Update instances with new style id
                 var instances = getInstances(msg.id);
-                console.log(instances);
                 instances.map((node) => {
                     node.setPluginData("styleId", newStyleId);
                 });

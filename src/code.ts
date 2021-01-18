@@ -1,3 +1,4 @@
+import { encode } from "../node_modules/base64-arraybuffer/lib/base64-arraybuffer.js"
 import { copyPasteProps, nodeRemovedByUser, pageNode, centerInViewport, sortNodesByPosition } from './helpers'
 
 // TODO: Check and update layer style previews when UI opens
@@ -74,7 +75,7 @@ function addInstance(styleId, nodeId) {
 }
 
 // TODO: Need to add a limit, incase user tries to add too many layer styles at once
-function addLayerStyle(node) {
+async function addLayerStyle(node) {
 
 	var layerStyles: any = getLayerStyles()
 
@@ -89,10 +90,25 @@ function addLayerStyle(node) {
 	}
 
 
+	// Get background image
+	var imageBytes
+	var base64
 
-	var layerStyle = { id: node.id, node: copyPasteStyle(node), name: node.name }
+	if (node.fills[0].type === "IMAGE") {
+		const image = figma.getImageByHash(node.fills[0].imageHash)
+
+		imageBytes = await image.getBytesAsync()
+
+		base64 = `data:image/jpg;base64,${encode(imageBytes)}`
+
+
+	}
+
+	var layerStyle = { id: node.id, node: copyPasteStyle(node), name: node.name, base64, arrayBuffer: imageBytes }
 
 	layerStyles.push(layerStyle)
+
+	console.log(layerStyles)
 
 	figma.root.setPluginData("styles", JSON.stringify(layerStyles))
 
@@ -212,7 +228,7 @@ function clearLayerStyle() {
 	figma.closePlugin()
 }
 
-function createStyles(selection) {
+async function createStyles(selection) {
 	if (selection.length > 0) {
 		selection = sortNodesByPosition(selection)
 		for (var i = 0; i < selection.length; i++) {
@@ -226,7 +242,7 @@ function createStyles(selection) {
 		}
 	}
 	else {
-		figma.notify("No nodes selected")
+		figma.notify("No layers selected")
 	}
 }
 
@@ -258,7 +274,14 @@ function applyLayerStyle(selection, styleId) {
 
 	}
 
-	figma.notify("Layer style applied")
+	if (selection.length > 0) {
+		figma.notify("Layer style applied")
+	}
+	else {
+		figma.notify("Please select a layer")
+	}
+
+
 }
 
 function removeLayerStyle(styleId) {
@@ -301,7 +324,7 @@ function detachLayerStyle(node) {
 function postMessage() {
 	var styles = getLayerStyles();
 	var message = styles
-
+	// console.log(styles)
 	figma.ui.postMessage(message)
 }
 
@@ -346,6 +369,7 @@ setInterval(() => {
 	update(thisNode)
 
 
+
 	// This live updates all instances with new style. Performance is a bit sluggish. Might be possible to speed it up if I stored an array of node ids which have layer style applied and then searched for node using getNodeById
 	// if (thisNode) {
 	// 	updateInstances(null, thisNode.id)
@@ -362,6 +386,7 @@ if (figma.command === "showStyles") {
 	figma.showUI(__html__, { width: 240, height: 360 });
 
 	postMessage()
+
 
 	// Calls to "parent.postMessage" from within the HTML page will trigger this
 	// callback. The callback will be passed the "pluginMessage" property of the
@@ -421,7 +446,7 @@ if (figma.command === "showStyles") {
 				// Update instances with new style id
 				var instances = getInstances(msg.id)
 
-				console.log(instances)
+
 				instances.map((node) => {
 					node.setPluginData("styleId", newStyleId)
 				})
@@ -451,6 +476,7 @@ if (figma.command === "showStyles") {
 
 if (figma.command === "createStyles") {
 	createStyles(figma.currentPage.selection)
+
 	figma.closePlugin()
 }
 
