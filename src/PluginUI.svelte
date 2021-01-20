@@ -18,26 +18,9 @@
 		IconPlus,
 		IconEllipses,
 	} from "figma-plugin-ds-svelte";
-	import { onMount } from "svelte";
 
 	import Styles from "./Styles.svelte";
-
-	//menu items, this is an array of objects to populate to our select menus
-	let menuItems = [
-		{
-			value: "rectangle",
-			label: "Rectangle",
-			group: null,
-			selected: false,
-		},
-		{ value: "triangle", label: "Triangle ", group: null, selected: false },
-		{ value: "circle", label: "Circle", group: null, selected: false },
-	];
-
-	// var disabled = true;
-	var selectedShape;
-	var count = 5;
-
+	
 	//this is a reactive variable that will return false when a value is selected from
 	//the select menu, its value is bound to the primary buttons disabled prop
 	// $: disabled = selectedShape === null;
@@ -51,10 +34,6 @@
 			},
 			"*"
 		);
-	}
-
-	function cancel() {
-		parent.postMessage({ pluginMessage: { type: "cancel" } }, "*");
 	}
 
 	var styles = [];

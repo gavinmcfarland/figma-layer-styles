@@ -139,10 +139,10 @@
         var boxShadow = "";
         var imageBg = "";
 
-        if (style.base64 || style.arrayBuffer) {
-            console.log(PNGFromBuffer(style.arrayBuffer));
-            imageBg = `background-image: url(${style.base64}); background-size: contain;`;
-        }
+        // if (style.base64 || style.arrayBuffer) {
+        //     console.log(PNGFromBuffer(style.arrayBuffer));
+        //     imageBg = `background-image: url(${style.base64}); background-size: contain;`;
+        // }
 
         if (style.node.strokes && style.node.strokes.length > 0) {
             if (style.node.strokes[0].visible) {
@@ -352,12 +352,19 @@
             }
         });
 
+        window.addEventListener("blur", () => {
+            renameStyle(styleBeingEdited.id, styleBeingEdited.name);
+            hideInput();
+            closeMenu();
+            if (listItem) listItem.classList.remove("blue-bg");
+        });
+
         // closeMenu(event, style);
     }
 
     function openMenu(event, style) {
         closeMenu();
-        // event.preventDefault();
+        event.preventDefault();
         var rect = event.currentTarget.getBoundingClientRect();
         event.currentTarget.classList.toggle("blue-bg");
 
@@ -396,7 +403,7 @@
 
     function hideInput() {
         if (listItem) field.classList.remove("show");
-        if (listItem) renameStyle(styleBeingEdited.id, styleBeingEdited.name);
+        // if (listItem) renameStyle(styleBeingEdited.id, styleBeingEdited.name);
     }
 
     function onPageClick(e) {

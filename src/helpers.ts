@@ -122,6 +122,8 @@ function clone(val) {
 }
 
 export function copyPasteProps(source, target?, { include, exclude }: Options = {}) {
+
+
     let allowlist: string[] = nodeProps.filter(function (el) {
         return !defaults.concat(readonly).includes(el)
     })
@@ -161,35 +163,29 @@ export function copyPasteProps(source, target?, { include, exclude }: Options = 
                 newArray.push(clone(source[key1]))
             }
             return newArray
-            // return val.map(copyPasteProps)
         } else if (val instanceof Uint8Array) {
             return new Uint8Array(val)
         } else {
             const o: any = {}
             for (const key1 in val) {
-                if (target) {
-                    for (const key2 in target) {
-                        if (allowlist.includes(key2)) {
-                            if (key1 === key2) {
-                                // if (Array.isArray(val[key1]) && val[key1].length === 0) {
-
-                                // }
-                                // else {
-
-                                // 	if (key1 === "fills") {
-                                // 		console.log("fill opacity is less than 1")
-                                // 	}
-                                // 	else {
-                                o[key1] = copyPasteProps(val[key1], target)
-                                // 	}
-
-                                // }
+                if (allowlist.includes(key1)) {
+                    // To prevent warning about reading horizontal and vertical padding
+                    if (!(key1 === "horizontalPadding" || key1 === "verticalPadding")) {
+                        if (target) {
+                            for (const key2 in target) {
+                                if (allowlist.includes(key2)) {
+                                    if (key1 === key2) {
+                                        o[key1] = copyPasteProps(val[key1], target)
+                                    }
+                                }
                             }
+                        } else {
+                            o[key1] = copyPasteProps(val[key1])
                         }
                     }
-                } else {
-                    o[key1] = copyPasteProps(val[key1])
                 }
+
+
             }
 
             if (target) {
