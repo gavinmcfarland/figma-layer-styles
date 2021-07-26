@@ -233,32 +233,37 @@ function createStyles(selection) {
 function applyLayerStyle(selection, styleId) {
 	// TODO: If node already has styleId and it matches it's node.id this means it is the master node for another style. Not sure how to fix this, as other style will look to this node for it. Possible fix is to change style ID of node.
 
-
-	for (let i = 0; i < selection.length; i++) {
-		var node = selection[i]
-		node.setPluginData("styleId", styleId)
-		node.setRelaunchData({ detachLayerStyle: 'Removes association with layer style' })
-
-		// var styleId = node.getPluginData("styleId")
-
-		// Look for node with matching styleID
-		var source = figma.getNodeById(styleId)
-
-		if (source) {
-
-			var layerStyle = source
-
-			copyPasteStyle(layerStyle, node)
-		}
-		else {
-			var layerStyle = getLayerStyles(styleId).node
-			copyPasteStyle(layerStyle, node)
-			console.log("Original node can't be found")
-		}
-
+	if (selection.length === 0) {
+		figma.notify("Please select one or more layers")
 	}
+	else {
+		for (let i = 0; i < selection.length; i++) {
+			var node = selection[i]
+			node.setPluginData("styleId", styleId)
+			node.setRelaunchData({ detachLayerStyle: 'Removes association with layer style' })
 
-	figma.notify("Layer style applied")
+			// var styleId = node.getPluginData("styleId")
+
+			// Look for node with matching styleID
+			var source = figma.getNodeById(styleId)
+
+			if (source) {
+
+				var layerStyle = source
+
+				copyPasteStyle(layerStyle, node)
+			}
+			else {
+				var layerStyle = getLayerStyles(styleId).node
+				copyPasteStyle(layerStyle, node)
+				console.log("Original node can't be found")
+			}
+
+		}
+
+		figma.notify("Layer style applied")
+	}
+	
 }
 
 function removeLayerStyle(styleId) {
