@@ -1,4 +1,5 @@
-"use strict";
+'use strict';
+
 /*! *****************************************************************************
 Copyright (c) Microsoft Corporation. All rights reserved.
 Licensed under the Apache License, Version 2.0 (the "License"); you may not use
@@ -12,4 +13,617 @@ MERCHANTABLITY OR NON-INFRINGEMENT.
 
 See the Apache Version 2.0 License for specific language governing permissions
 and limitations under the License.
-***************************************************************************** */function e(e,t,i,n){return new(i||(i=Promise))((function(o,a){function r(e){try{s(n.next(e))}catch(e){a(e)}}function l(e){try{s(n.throw(e))}catch(e){a(e)}}function s(e){var t;e.done?o(e.value):(t=e.value,t instanceof i?t:new i((function(e){e(t)}))).then(r,l)}s((n=n.apply(e,t||[])).next())}))}const t=["id","parent","name","removed","visible","locked","children","constraints","absoluteTransform","relativeTransform","x","y","rotation","width","height","constrainProportions","layoutAlign","layoutGrow","opacity","blendMode","isMask","effects","effectStyleId","expanded","backgrounds","backgroundStyleId","fills","strokes","strokeWeight","strokeMiterLimit","strokeAlign","strokeCap","strokeJoin","dashPattern","fillStyleId","strokeStyleId","cornerRadius","cornerSmoothing","topLeftRadius","topRightRadius","bottomLeftRadius","bottomRightRadius","exportSettings","overflowDirection","numberOfFixedChildren","overlayPositionType","overlayBackground","overlayBackgroundInteraction","reactions","description","remote","key","layoutMode","primaryAxisSizingMode","counterAxisSizingMode","primaryAxisAlignItems","counterAxisAlignItems","paddingLeft","paddingRight","paddingTop","paddingBottom","itemSpacing","layoutGrids","gridStyleId","clipsContent","guides"],i=["id","parent","removed","children","absoluteTransform","width","height","overlayPositionType","overlayBackground","overlayBackgroundInteraction","reactions","remote","key","type"],n=["rotation","constrainProportions"],o=["name","guides","description","remote","key","reactions","x","y","exportSettings","expanded","isMask","exportSettings","overflowDirection","numberOfFixedChildren","constraints","relativeTransform"];function a(e){return JSON.parse(JSON.stringify(e))}function r(e,l,{include:s,exclude:d}={}){let g=t.filter((function(e){return!o.concat(i).includes(e)}));s&&(g=g.concat(s)),d&&(g=g.filter((function(e){return!d.includes(e)}))),"INSTANCE"===(null==l?void 0:l.parent.type)&&(g=g.filter((function(e){return!n.includes(e)})));const c=e,f=typeof e;if("undefined"===f||"number"===f||"string"===f||"boolean"===f||"symbol"===f||null===e)return c;if("object"===f){if(c instanceof Array){var u=[];for(const t in e)u.push(a(e[t]));return u}if(c instanceof Uint8Array)return new Uint8Array(c);{const e={};for(const t in c)if(g.includes(t)&&"horizontalPadding"!==t&&"verticalPadding"!==t)if(l)for(const i in l)g.includes(i)&&t===i&&(e[t]=r(c[t],l));else e[t]=r(c[t]);return l?((e.fillStyleId||!e.fills)&&delete e.fills,(e.strokeStyleId||!e.strokes)&&delete e.strokes,(e.backgroundStyleId||!e.backgrounds)&&delete e.backgrounds,e.cornerRadius!==figma.mixed?(delete e.topLeftRadius,delete e.topRightRadius,delete e.bottomLeftRadius,delete e.bottomRightRadius):delete e.cornerRadius,Object.assign(l,e)):e}}throw"unknown"}const l=["opacity","blendMode","effects","effectStyleId","backgrounds","backgroundStyleId","fills","strokes","strokeWeight","strokeMiterLimit","strokeAlign","strokeCap","strokeJoin","dashPattern","fillStyleId","strokeStyleId","cornerRadius","cornerSmoothing","topLeftRadius","topRightRadius","bottomLeftRadius","bottomRightRadius","paddingLeft","paddingRight","paddingTop","paddingBottom","itemSpacing","layoutGrids","gridStyleId"];function s(e,t){return t?r(e,t,{include:l,exclude:["autoRename","characters","fontName","fontSize","rotation","primaryAxisSizingMode","counterAxisSizingMode","primaryAxisAlignItems","counterAxisAlignItems","constrainProportions","layoutAlign","layoutGrow","layoutMode"]}):r(e)}function d(t){return e(this,void 0,void 0,(function*(){var e=c();for(let i=0;i<e.length;i++){if(e[i].id===t.id)return console.log("Layer style already exists"),void figma.notify("Layer style already exists")}var i={id:t.id,node:s(t),name:t.name};e.push(i),figma.root.setPluginData("styles",JSON.stringify(e))}))}function g(e,t,i,n){var o=c();o.map(o=>{o.id==e&&(t&&(o.name=t),i&&(o.node=i),n&&(o.id=n))}),figma.root.setPluginData("styles",JSON.stringify(o))}function c(e){var t=figma.root.getPluginData("styles");if(t=""!==t?JSON.parse(t):[],e){var i=t.filter((function(t){return t.id===e}));t=i[0]}return t}function f(e,t){var i;if(e&&(i=e),t){i=[];var n=figma.root.children,o=n.length;for(let e=0;e<o;e++)n[e].findAll(e=>{e.getPluginData("styleId")===t&&i.push(e)})}for(let e=0;e<i.length;e++){var a,r=i[e],l=r.getPluginData("styleId"),d=figma.getNodeById(l);d?(g(l,null,s(a=d)),s(a,r)):(s(a=c(l).node,r),console.log("Original node can't be found"))}}function u(t){return e(this,void 0,void 0,(function*(){if(t.length>0)if(t.length<=20){(n=t.map(e=>e)).sort((e,t)=>e.x-t.x),t=n.sort((e,t)=>e.y-t.y);for(var e=0;e<t.length;e++){var i=t[e];i.setPluginData("styleId",i.id),d(i)}}else figma.notify("Limited to 20 layer styles at a time");else figma.notify("No layers selected");var n}))}function m(e){e.setPluginData("styleId",""),e.setRelaunchData({})}function y(){var e=c();figma.ui.postMessage(e)}var p=null;if(figma.on("selectionchange",()=>{!function(e){if(e&&1===e.length){var t=e[0];t.id===t.getPluginData("styleId")&&(console.log("Selection is main layer style"),p=t)}}(figma.currentPage.selection),console.log("Selection changed"),p&&setInterval(()=>{!function(e){e&&(g(e.getPluginData("styleId"),null,s(e)),y())}(p)},600),0===figma.currentPage.selection.length&&(p=null)}),"showStyles"===figma.command&&(figma.showUI(__html__,{width:240,height:360}),y(),figma.ui.onmessage=e=>{if("add-style"===e.type&&(u(figma.currentPage.selection),y()),"rename-style"===e.type&&(g(e.id,e.name),y()),"update-instances"===e.type&&(f(figma.currentPage.selection,e.id),y()),"update-style"===e.type){var t=s(i=figma.currentPage.selection[0]);g(e.id,null,t,i.id),figma.currentPage.selection[0].setPluginData("styleId",i.id),y()}if("edit-layer-style"===e.type){var i;if(function(e){return!e||(null===e.parent||null===e.parent.parent)}(i=figma.getNodeById(e.id))){var n=(i=figma.createFrame()).id;s((t=c(e.id)).node,i),function(e){e.x=figma.viewport.center.x-e.width/2,e.y=figma.viewport.center.y-e.height/2}(i),i.name=`${t.name}`,figma.viewport.scrollAndZoomIntoView([i]),figma.viewport.zoom=.25,i.setPluginData("styleId",i.id),g(e.id,null,null,i.id),(o=e.id,figma.root.findAll(e=>e.getPluginData("styleId")===o)).map(e=>{e.setPluginData("styleId",n)}),figma.currentPage.selection=[i]}else figma.viewport.scrollAndZoomIntoView([i]),figma.viewport.zoom=.25,figma.currentPage=function e(t){return"PAGE"===t.parent.type?t.parent:e(t.parent)}(i),figma.currentPage.selection=[i];y()}var o;"apply-style"===e.type&&function(e,t){var i;i=c(t).node;var n=figma.getNodeById(t);if(e.length<=100)if(e.length>0){for(let a=0;a<e.length;a++){var o=e[a];o.setPluginData("styleId",t),o.setRelaunchData({detachLayerStyle:"Removes association with layer style"}),n?s(i=n,o):(s(i,o),console.log("Original node can't be found"))}figma.notify("Layer style applied")}else figma.notify("Please select a layer");else figma.notify("Limited to 100 layers at a time")}(figma.currentPage.selection,e.id),"remove-style"===e.type&&(!function(e){var t=c();t.splice(t.findIndex(t=>t.id===e),1),figma.root.setPluginData("styles",JSON.stringify(t)),figma.root.findAll(t=>{t.getPluginData("styleId")===e&&t.setPluginData("styleId","")})}(e.id),y())}),"createStyles"===figma.command&&(u(figma.currentPage.selection),figma.closePlugin()),"updateStyles"===figma.command&&(f(figma.currentPage.selection),figma.closePlugin()),"clearLayerStyles"===figma.command&&(figma.root.setPluginData("styles",""),console.log("Styles cleared"),figma.closePlugin()),"copyProperties"===figma.command&&s(figma.currentPage.selection[0]),"detachLayerStyle"===figma.command){for(var h=0;h<figma.currentPage.selection.length;h++){m(figma.currentPage.selection[h])}figma.notify("Layer style detached"),figma.closePlugin()}
+***************************************************************************** */
+
+function __awaiter(thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+}
+
+const nodeProps = [
+    'id',
+    'parent',
+    'name',
+    'removed',
+    'visible',
+    'locked',
+    'children',
+    'constraints',
+    'absoluteTransform',
+    'relativeTransform',
+    'x',
+    'y',
+    'rotation',
+    'width',
+    'height',
+    'constrainProportions',
+    'layoutAlign',
+    'layoutGrow',
+    'opacity',
+    'blendMode',
+    'isMask',
+    'effects',
+    'effectStyleId',
+    'expanded',
+    'backgrounds',
+    'backgroundStyleId',
+    'fills',
+    'strokes',
+    'strokeWeight',
+    'strokeMiterLimit',
+    'strokeAlign',
+    'strokeCap',
+    'strokeJoin',
+    'dashPattern',
+    'fillStyleId',
+    'strokeStyleId',
+    'cornerRadius',
+    'cornerSmoothing',
+    'topLeftRadius',
+    'topRightRadius',
+    'bottomLeftRadius',
+    'bottomRightRadius',
+    'exportSettings',
+    'overflowDirection',
+    'numberOfFixedChildren',
+    'overlayPositionType',
+    'overlayBackground',
+    'overlayBackgroundInteraction',
+    'reactions',
+    'description',
+    'remote',
+    'key',
+    'layoutMode',
+    'primaryAxisSizingMode',
+    'counterAxisSizingMode',
+    'primaryAxisAlignItems',
+    'counterAxisAlignItems',
+    'paddingLeft',
+    'paddingRight',
+    'paddingTop',
+    'paddingBottom',
+    'itemSpacing',
+    // 'horizontalPadding',
+    // 'verticalPadding',
+    'layoutGrids',
+    'gridStyleId',
+    'clipsContent',
+    'guides'
+];
+const readonly = [
+    'id',
+    'parent',
+    'removed',
+    'children',
+    'absoluteTransform',
+    'width',
+    'height',
+    'overlayPositionType',
+    'overlayBackground',
+    'overlayBackgroundInteraction',
+    'reactions',
+    'remote',
+    'key',
+    'type'
+];
+const instanceProps = [
+    'rotation',
+    'constrainProportions'
+];
+const defaults = [
+    'name',
+    'guides',
+    'description',
+    'remote',
+    'key',
+    'reactions',
+    'x',
+    'y',
+    'exportSettings',
+    'expanded',
+    'isMask',
+    'exportSettings',
+    'overflowDirection',
+    'numberOfFixedChildren',
+    'constraints',
+    'relativeTransform'
+];
+function clone(val) {
+    return JSON.parse(JSON.stringify(val));
+}
+function copyPasteProps(source, target, { include, exclude } = {}) {
+    let allowlist = nodeProps.filter(function (el) {
+        return !defaults.concat(readonly).includes(el);
+    });
+    if (include) {
+        allowlist = allowlist.concat(include);
+    }
+    if (exclude) {
+        allowlist = allowlist.filter(function (el) {
+            return !exclude.includes(el);
+        });
+    }
+    if ((target === null || target === void 0 ? void 0 : target.parent.type) === "INSTANCE") {
+        allowlist = allowlist.filter(function (el) {
+            return !instanceProps.includes(el);
+        });
+    }
+    const val = source;
+    const type = typeof source;
+    if (type === 'undefined' ||
+        type === 'number' ||
+        type === 'string' ||
+        type === 'boolean' ||
+        type === 'symbol' ||
+        source === null) {
+        return val;
+    }
+    else if (type === 'object') {
+        if (val instanceof Array) {
+            var newArray = [];
+            for (const key1 in source) {
+                newArray.push(clone(source[key1]));
+            }
+            return newArray;
+        }
+        else if (val instanceof Uint8Array) {
+            return new Uint8Array(val);
+        }
+        else {
+            const o = {};
+            for (const key1 in val) {
+                if (allowlist.includes(key1)) {
+                    // To prevent warning about reading horizontal and vertical padding
+                    if (!(key1 === "horizontalPadding" || key1 === "verticalPadding")) {
+                        if (target) {
+                            for (const key2 in target) {
+                                if (allowlist.includes(key2)) {
+                                    if (key1 === key2) {
+                                        o[key1] = copyPasteProps(val[key1], target);
+                                    }
+                                }
+                            }
+                        }
+                        else {
+                            o[key1] = copyPasteProps(val[key1]);
+                        }
+                    }
+                }
+            }
+            if (target) {
+                !o.fillStyleId && o.fills ? null : delete o.fills;
+                !o.strokeStyleId && o.strokes ? null : delete o.strokes;
+                !o.backgroundStyleId && o.backgrounds ? null : delete o.backgrounds;
+                if (o.cornerRadius !== figma.mixed) {
+                    delete o.topLeftRadius;
+                    delete o.topRightRadius;
+                    delete o.bottomLeftRadius;
+                    delete o.bottomRightRadius;
+                }
+                else {
+                    delete o.cornerRadius;
+                }
+                return Object.assign(target, o);
+            }
+            else {
+                return o;
+            }
+        }
+    }
+    throw 'unknown';
+}
+function nodeRemovedByUser(node) {
+    if (node) {
+        if (node.parent === null || node.parent.parent === null) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+    else {
+        return true;
+    }
+}
+function pageNode(node) {
+    if (node.parent.type === "PAGE") {
+        return node.parent;
+    }
+    else {
+        return pageNode(node.parent);
+    }
+}
+function centerInViewport(node) {
+    // Position newly created table in center of viewport
+    node.x = figma.viewport.center.x - (node.width / 2);
+    node.y = figma.viewport.center.y - (node.height / 2);
+}
+function sortNodesByPosition(nodes) {
+    var result = nodes.map((x) => x);
+    result.sort((current, next) => current.x - next.x);
+    return result.sort((current, next) => current.y - next.y);
+}
+
+// TODO: Check and update layer style previews when UI opens
+// TODO: When editing a layer style, check that the node is a component and if it's been deleted by user
+const styleProps = [
+    // 'constrainProportions',
+    // 'layoutAlign',
+    // 'layoutGrow',
+    'opacity',
+    'blendMode',
+    'effects',
+    'effectStyleId',
+    // 'expanded',
+    'backgrounds',
+    'backgroundStyleId',
+    'fills',
+    'strokes',
+    'strokeWeight',
+    'strokeMiterLimit',
+    'strokeAlign',
+    'strokeCap',
+    'strokeJoin',
+    'dashPattern',
+    'fillStyleId',
+    'strokeStyleId',
+    'cornerRadius',
+    'cornerSmoothing',
+    'topLeftRadius',
+    'topRightRadius',
+    'bottomLeftRadius',
+    'bottomRightRadius',
+    // 'layoutMode',
+    // 'primaryAxisSizingMode',
+    // 'counterAxisSizingMode',
+    // 'primaryAxisAlignItems',
+    // 'counterAxisAlignItems',
+    'paddingLeft',
+    'paddingRight',
+    'paddingTop',
+    'paddingBottom',
+    'itemSpacing',
+    'layoutGrids',
+    'gridStyleId'
+    // 'clipsContent',
+    // 'guides'
+];
+function copyPasteStyle(source, target) {
+    if (target) {
+        return copyPasteProps(source, target, {
+            include: styleProps,
+            exclude: ['autoRename', 'characters', 'fontName', 'fontSize', 'rotation', 'primaryAxisSizingMode',
+                'counterAxisSizingMode',
+                'primaryAxisAlignItems',
+                'counterAxisAlignItems',
+                'constrainProportions',
+                'layoutAlign',
+                'layoutGrow',
+                'layoutMode']
+        });
+    }
+    else {
+        return copyPasteProps(source);
+    }
+}
+function getInstances(styleId) {
+    return figma.root.findAll((node) => node.getPluginData("styleId") === styleId);
+}
+// TODO: Need to add a limit, incase user tries to add too many layer styles at once
+function addLayerStyle(node) {
+    return __awaiter(this, void 0, void 0, function* () {
+        var layerStyles = getLayerStyles();
+        for (let i = 0; i < layerStyles.length; i++) {
+            var layerStyle = layerStyles[i];
+            if (layerStyle.id === node.id) {
+                console.log("Layer style already exists");
+                figma.notify("Layer style already exists");
+                return;
+            }
+        }
+        var newLayerStyle = { id: node.id, node: copyPasteStyle(node), name: node.name };
+        layerStyles.push(newLayerStyle);
+        figma.root.setPluginData("styles", JSON.stringify(layerStyles));
+    });
+}
+function updateLayerStyle(id, name, properties, newId) {
+    var styles = getLayerStyles();
+    styles.map((obj) => {
+        if (obj.id == id) {
+            if (name) {
+                obj.name = name;
+            }
+            if (properties) {
+                obj.node = properties;
+            }
+            if (newId) {
+                obj.id = newId;
+            }
+        }
+    });
+    figma.root.setPluginData("styles", JSON.stringify(styles));
+}
+function getLayerStyles(id) {
+    var styles = figma.root.getPluginData("styles");
+    if (styles !== "") {
+        styles = JSON.parse(styles);
+    }
+    else {
+        styles = [];
+    }
+    if (id) {
+        var newStyles = styles.filter(function (style) {
+            return style.id === id;
+        });
+        styles = newStyles[0];
+    }
+    return styles;
+}
+function updateInstances(selection, id) {
+    // Find nodes that should be updated with new properties
+    var nodes;
+    if (selection) {
+        nodes = selection;
+    }
+    if (id) {
+        nodes = [];
+        var pages = figma.root.children;
+        var length = pages.length;
+        for (let i = 0; i < length; i++) {
+            pages[i].findAll(node => {
+                if (node.getPluginData("styleId") === id) {
+                    nodes.push(node);
+                }
+            });
+        }
+        //// This method is a lot slower!!!
+        // var instances = getInstances(nodeBeingEdited.getPluginData("styleId"))
+        // for (var i = 0; i < instances.length; i++) {
+        // 	var instanceId = instances[i]
+        // 	nodes.push(figma.getNodeById(instanceId))
+        // }
+    }
+    // For each node
+    for (let i = 0; i < nodes.length; i++) {
+        var node = nodes[i];
+        var styleId = node.getPluginData("styleId");
+        // Look for node with matching styleID
+        var source = figma.getNodeById(styleId);
+        var layerStyle;
+        if (source) {
+            layerStyle = source;
+            updateLayerStyle(styleId, null, copyPasteStyle(layerStyle));
+            copyPasteStyle(layerStyle, node);
+        }
+        else {
+            layerStyle = getLayerStyles(styleId).node;
+            copyPasteStyle(layerStyle, node);
+            console.log("Original node can't be found");
+        }
+    }
+    // figma.closePlugin()
+}
+function clearLayerStyle() {
+    figma.root.setPluginData("styles", "");
+    console.log("Styles cleared");
+    figma.closePlugin();
+}
+function createStyles(selection) {
+    return __awaiter(this, void 0, void 0, function* () {
+        if (selection.length > 0) {
+            if (selection.length <= 20) {
+                selection = sortNodesByPosition(selection);
+                for (var i = 0; i < selection.length; i++) {
+                    var node = selection[i];
+                    node.setPluginData("styleId", node.id);
+                    // var target = pasteProperties(figma.createFrame(), styles)
+                    // node.setRelaunchData({ updateStyles: 'Refresh layers connected to this style' });
+                    // figma.viewport.scrollAndZoomIntoView([target]);
+                    // console.log(node)
+                    addLayerStyle(node);
+                }
+            }
+            else {
+                figma.notify("Limited to 20 layer styles at a time");
+            }
+        }
+        else {
+            figma.notify("No layers selected");
+        }
+    });
+}
+function applyLayerStyle(selection, styleId) {
+    // TODO: If node already has styleId and it matches it's node.id this means it is the master node for another style. Not sure how to fix this, as other style will look to this node for it. Possible fix is to change style ID of node.
+    var layerStyle;
+    layerStyle = getLayerStyles(styleId).node;
+    var source = figma.getNodeById(styleId);
+    if (selection.length <= 100) {
+        if (selection.length > 0) {
+            for (let i = 0; i < selection.length; i++) {
+                var node = selection[i];
+                node.setPluginData("styleId", styleId);
+                node.setRelaunchData({ detachLayerStyle: 'Removes association with layer style' });
+                // var styleId = node.getPluginData("styleId")
+                // Look for node with matching styleID
+                if (source) {
+                    layerStyle = source;
+                    copyPasteStyle(layerStyle, node);
+                }
+                else {
+                    copyPasteStyle(layerStyle, node);
+                    console.log("Original node can't be found");
+                }
+            }
+            figma.notify("Layer style applied");
+        }
+        else {
+            figma.notify("Please select a layer");
+        }
+    }
+    else {
+        figma.notify("Limited to 100 layers at a time");
+    }
+}
+function removeLayerStyle(styleId) {
+    var styles = getLayerStyles();
+    // Remove layer style with matching node
+    styles.splice(styles.findIndex(node => {
+        return node.id === styleId;
+    }), 1);
+    // Set layer styles again
+    figma.root.setPluginData("styles", JSON.stringify(styles));
+    // Remove plugin data from all nodes with matching style id
+    // var pages = figma.root.children
+    // var length = pages.length;
+    // for (let i = 0; i < length; i++) {
+    // 	pages[i].findAll(node => {
+    // 		if (node.getPluginData("styleId") === styleId) {
+    // 			node.setPluginData("styleId", "")
+    // 		}
+    // 	})
+    // }
+    figma.root.findAll(node => {
+        if (node.getPluginData("styleId") === styleId) {
+            node.setPluginData("styleId", "");
+        }
+    });
+    // TODO: Remove relaunch data
+}
+function detachLayerStyle(node) {
+    node.setPluginData("styleId", "");
+    node.setRelaunchData({});
+}
+function postMessage() {
+    var styles = getLayerStyles();
+    figma.ui.postMessage(styles);
+}
+// This updates preview inside layer styles list
+// TODO: Need to be careful if something happens to node while it's being watched, for example if it's deleted
+// The node being edited
+var nodeBeingEdited = null;
+function checkNodeBeingEdited(selection) {
+    if (selection && selection.length === 1) {
+        var node = selection[0];
+        if (node.id === node.getPluginData("styleId")) {
+            console.log("Selection is main layer style");
+            nodeBeingEdited = node;
+        }
+    }
+}
+function updatePreview(nodeBeingEdited) {
+    if (nodeBeingEdited) {
+        var layerStyleId = nodeBeingEdited.getPluginData("styleId");
+        var properties = copyPasteStyle(nodeBeingEdited);
+        updateLayerStyle(layerStyleId, null, properties);
+        postMessage();
+    }
+}
+figma.on("selectionchange", () => {
+    checkNodeBeingEdited(figma.currentPage.selection);
+    console.log("Selection changed");
+    if (nodeBeingEdited) {
+        setInterval(() => {
+            updatePreview(nodeBeingEdited);
+        }, 600);
+    }
+    // If user unselects then change node being edited to null
+    if (figma.currentPage.selection.length === 0) {
+        nodeBeingEdited = null;
+    }
+});
+if (figma.command === "showStyles") {
+    // This shows the HTML page in "ui.html".
+    figma.showUI(__html__, { width: 240, height: 360 });
+    postMessage();
+    // Calls to "parent.postMessage" from within the HTML page will trigger this
+    // callback. The callback will be passed the "pluginMessage" property of the
+    // posted message.
+    figma.ui.onmessage = msg => {
+        if (msg.type === "add-style") {
+            createStyles(figma.currentPage.selection);
+            postMessage();
+        }
+        if (msg.type === "rename-style") {
+            updateLayerStyle(msg.id, msg.name);
+            postMessage();
+        }
+        if (msg.type === "update-instances") {
+            updateInstances(figma.currentPage.selection, msg.id);
+            postMessage();
+        }
+        if (msg.type === "update-style") {
+            var node = figma.currentPage.selection[0];
+            var properties = copyPasteStyle(node);
+            updateLayerStyle(msg.id, null, properties, node.id);
+            figma.currentPage.selection[0].setPluginData("styleId", node.id);
+            postMessage();
+        }
+        if (msg.type === "edit-layer-style") {
+            var node = figma.getNodeById(msg.id);
+            if (!nodeRemovedByUser(node)) {
+                figma.viewport.scrollAndZoomIntoView([node]);
+                figma.viewport.zoom = 0.25;
+                figma.currentPage = pageNode(node);
+                figma.currentPage.selection = [node];
+            }
+            else {
+                node = figma.createFrame();
+                var newStyleId = node.id;
+                var properties = getLayerStyles(msg.id);
+                copyPasteStyle(properties.node, node);
+                centerInViewport(node);
+                node.name = `${properties.name}`;
+                figma.viewport.scrollAndZoomIntoView([node]);
+                figma.viewport.zoom = 0.25;
+                // figma.viewport.scrollAndZoomIntoView([node])
+                // Set as the new master layer style
+                node.setPluginData("styleId", node.id);
+                updateLayerStyle(msg.id, null, null, node.id);
+                // Update instances with new style id
+                var instances = getInstances(msg.id);
+                instances.map((node) => {
+                    node.setPluginData("styleId", newStyleId);
+                });
+                figma.currentPage.selection = [node];
+            }
+            postMessage();
+        }
+        if (msg.type === "apply-style") {
+            applyLayerStyle(figma.currentPage.selection, msg.id);
+        }
+        if (msg.type === "remove-style") {
+            removeLayerStyle(msg.id);
+            postMessage();
+        }
+        // Make sure to close the plugin when you're done. Otherwise the plugin will
+        // keep running, which shows the cancel button at the bottom of the screen.
+    };
+}
+if (figma.command === "createStyles") {
+    createStyles(figma.currentPage.selection);
+    figma.closePlugin();
+}
+if (figma.command === "updateStyles") {
+    updateInstances(figma.currentPage.selection);
+    figma.closePlugin();
+}
+if (figma.command === "clearLayerStyles") {
+    clearLayerStyle();
+}
+if (figma.command === "copyProperties") {
+    copyPasteStyle(figma.currentPage.selection[0]);
+    // figma.closePlugin()
+}
+if (figma.command === "detachLayerStyle") {
+    for (var i = 0; i < figma.currentPage.selection.length; i++) {
+        var node = figma.currentPage.selection[i];
+        detachLayerStyle(node);
+    }
+    figma.notify("Layer style detached");
+    figma.closePlugin();
+}
