@@ -263,39 +263,6 @@ function applyLayerStyle(selection, styleId) {
 				node.setPluginData("styleId", styleId)
 				node.setRelaunchData({ detachLayerStyle: 'Removes association with layer style' })
 
-<<<<<<< HEAD
-	if (selection.length === 0) {
-		figma.notify("Please select one or more layers")
-	}
-	else {
-		for (let i = 0; i < selection.length; i++) {
-			var node = selection[i]
-			node.setPluginData("styleId", styleId)
-			node.setRelaunchData({ detachLayerStyle: 'Removes association with layer style' })
-
-			// var styleId = node.getPluginData("styleId")
-
-			// Look for node with matching styleID
-			var source = figma.getNodeById(styleId)
-
-			if (source) {
-
-				var layerStyle = source
-
-				copyPasteStyle(layerStyle, node)
-			}
-			else {
-				var layerStyle = getLayerStyles(styleId).node
-				copyPasteStyle(layerStyle, node)
-				console.log("Original node can't be found")
-			}
-
-		}
-
-		figma.notify("Layer style applied")
-	}
-	
-=======
 				// var styleId = node.getPluginData("styleId")
 
 				// Look for node with matching styleID
@@ -327,7 +294,6 @@ function applyLayerStyle(selection, styleId) {
 
 
 
->>>>>>> fixed-memory-leak
 }
 
 function removeLayerStyle(styleId) {
