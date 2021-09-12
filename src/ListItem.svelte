@@ -1,6 +1,4 @@
 <script>
-    import { loop_guard } from "svelte/internal";
-
     import { fade } from "svelte/transition";
     import { afterUpdate } from "svelte";
 
@@ -19,6 +17,117 @@
     let listItem;
     let menu;
 
+    // async function decode(bytes) {
+    //     const url = URL.createObjectURL(new Blob([bytes]));
+    //     console.log(url);
+    //     return new Promise((resolve, reject) => {
+    //         const img = new Image();
+    //         img.onload = () => resolve(img);
+    //         img.onerror = () => reject();
+    //         img.src = url;
+    //         resolve(img);
+    //     });
+    // }
+
+    // function _arrayBufferToBase64(buffer) {
+    //     var binary = "";
+    //     var bytes = new Uint8Array(buffer);
+    //     var len = bytes.byteLength;
+    //     for (var i = 0; i < len; i++) {
+    //         binary += String.fromCharCode(bytes[i]);
+    //     }
+    //     return window.btoa(binary);
+    // }
+
+    // export function imageBufferToSrc(imageBuffer: Uint8Array) {
+    //     return URL.createObjectURL(
+    //         new Blob([imageBuffer], { type: "image/png" })
+    //     );
+    // }
+
+    // async function createImageUrl(imageBytes) {
+    //     // const byteArray = new Uint8Array(imageBytes);
+    //     // console.log(byteArray);
+    //     // var thing = btoa(
+    //     //     new Uint8Array(imageBytes).reduce(
+    //     //         (data, byte) => data + String.fromCharCode(byte),
+    //     //         ""
+    //     //     )
+    //     // );
+    //     // console.log(Buffer.from(imageBytes).toString("base64"));
+    //     const blob = new Blob([imageBytes]);
+    //     var reader = new FileReader();
+    //     reader.readAsDataURL(blob);
+
+    //     return new Promise((resolve) => {
+    //         reader.onloadend = function () {
+    //             var imageUrl = reader.result;
+
+    //             resolve(imageUrl);
+    //         };
+    //     });
+    // }
+
+    // function base64(imageBytes) {
+    //     return btoa(
+    //         new Uint8Array(imageBytes).reduce(
+    //             (data, byte) => data + String.fromCharCode(byte),
+    //             ""
+    //         )
+    //     );
+    // }
+
+    // function SVGFromBuffer(buffer) {
+    //     const imgBase64 =
+    //         "data:image/svg+xml;base64," +
+    //         btoa(
+    //             new Uint8Array(buffer).reduce((data, byte) => {
+    //                 return data + String.fromCharCode(byte);
+    //             }, "")
+    //         );
+    //     return imgBase64;
+    // }
+
+    // async function encode(canvas, ctx, imageData) {
+    //     ctx.putImageData(imageData, 0, 0);
+    //     return await new Promise((resolve, reject) => {
+    //         canvas.toBlob((blob) => {
+    //             const reader = new FileReader();
+    //             reader.onload = () => resolve(new Uint8Array(reader.result));
+    //             reader.onerror = () =>
+    //                 reject(new Error("Could not read from blob"));
+    //             reader.readAsArrayBuffer(blob);
+    //         });
+    //     });
+    // }
+
+    // function arrayBufferToBase64(buffer) {
+    //     console.log(buffer);
+    //     var binary = "";
+    //     var bytes = new Uint8Array(buffer);
+    //     var len = bytes.byteLength;
+    //     for (var i = 0; i < len; i++) {
+    //         binary += String.fromCharCode(bytes[i]);
+    //     }
+    //     return window.btoa(binary);
+    // }
+
+    // function toBase64(u8) {
+    //     console.log(btoa(String.fromCharCode.apply(null, u8)));
+    //     return btoa(String.fromCharCode.apply(null, u8));
+    // }
+
+    function PNGFromBuffer(buffer) {
+        const imgBase64 =
+            "data:image/png;base64," +
+            btoa(
+                new Uint8Array(buffer).reduce((data, byte) => {
+                    return data + String.fromCharCode(byte);
+                }, "")
+            );
+        return imgBase64;
+    }
+
     function styleCss(style) {
         var string = "";
         var border = "";
@@ -28,6 +137,12 @@
         var borderWeight = "";
         var borderRadius = "";
         var boxShadow = "";
+        var imageBg = "";
+
+        // if (style.base64 || style.arrayBuffer) {
+        //     console.log(PNGFromBuffer(style.arrayBuffer));
+        //     imageBg = `background-image: url(${style.base64}); background-size: contain;`;
+        // }
 
         if (style.node.strokes && style.node.strokes.length > 0) {
             if (style.node.strokes[0].visible) {
@@ -114,7 +229,7 @@
             boxShadow = `box-shadow: ${boxShadows.join(" ")};`;
         }
 
-        string = `${background} ${border} ${borderRadius} ${boxShadow}`;
+        string = `${background} ${border} ${borderRadius} ${boxShadow} ${imageBg}`;
 
         return string;
     }
@@ -237,11 +352,19 @@
             }
         });
 
+        window.addEventListener("blur", () => {
+            renameStyle(styleBeingEdited.id, styleBeingEdited.name);
+            hideInput();
+            closeMenu();
+            if (listItem) listItem.classList.remove("blue-bg");
+        });
+
         // closeMenu(event, style);
     }
 
     function openMenu(event, style) {
         closeMenu();
+        event.preventDefault();
         var rect = event.currentTarget.getBoundingClientRect();
         event.currentTarget.classList.toggle("blue-bg");
 
@@ -279,8 +402,8 @@
     }
 
     function hideInput() {
-        field.classList.remove("show");
-        renameStyle(styleBeingEdited.id, styleBeingEdited.name);
+        if (listItem) field.classList.remove("show");
+        // if (listItem) renameStyle(styleBeingEdited.id, styleBeingEdited.name);
     }
 
     function onPageClick(e) {
@@ -297,17 +420,68 @@
         //     console.log("Clicked outside menu");
         // }
 
+        console.log("Clicked outside");
         hideInput();
         closeMenu();
-        listItem.classList.remove("blue-bg");
+        if (listItem) listItem.classList.remove("blue-bg");
     }
 
     window.addEventListener("blur", () => {
         hideInput();
         closeMenu();
-        listItem.classList.remove("blue-bg");
+        if (listItem) listItem.classList.remove("blue-bg");
     });
 </script>
+
+<svelte:body on:click={onPageClick} />
+
+<div
+    class="list-item"
+    style="position: relative;"
+    id="listItem{style.id}"
+    bind:this={listItem}
+    on:contextmenu={openMenu(event, style)}
+>
+    <div on:click={applyStyle(style.id)} style="display: flex; flex-grow: 1;">
+        <Type class="pl-xsmall pr-xxsmall flex place-center">
+            <span class="layer-icon" style={styleCss(style)} />
+            <div class="field flex place-center" style="flex-grow: 1;">
+                <div
+                    bind:this={field}
+                    class="editName"
+                    transition:fade={{ duration: 100 }}
+                >
+                    <Input
+                        bind:value={styleBeingEdited.name}
+                        class="mb-xxsmall"
+                    />
+                </div>
+                <span style="flex-grow: 1; user-select: none;"
+                    >{style.name}</span
+                >
+                <!-- <IconButton on:click={applyStyle(style.id)} iconName={IconPlus} /> -->
+            </div>
+        </Type>
+    </div>
+    <Type class="flex place-center">
+        <div
+            class="menu"
+            bind:this={menu}
+            style="left: {mousePosX}px; top: {mousePosY}px"
+        >
+            <div class="triangle" />
+            <span on:click={updateInstances(style.id)}>Refresh</span>
+            <span on:click={editLayerStyle(style.id)}>Edit</span>
+
+            <!-- <span on:click={updateLayerStyle(style.id)}>Update</span> -->
+
+            <!-- <a on:click={renameStyle(style.id, 'test')}>Rename</a> -->
+            <span on:click={editStyle(event, style)}>Rename</span>
+            <span class="divider" />
+            <span on:click={removeStyle(style.id)}>Delete</span>
+        </div>
+    </Type>
+</div>
 
 <style>
     :global(.menu) {
@@ -399,48 +573,3 @@
         margin-bottom: 8px;
     }
 </style>
-
-<svelte:body on:click={onPageClick} />
-
-<div
-    class="list-item"
-    style="position: relative;"
-    id="listItem{style.id}"
-    bind:this={listItem}
-    on:contextmenu={openMenu(event, style)}>
-    <div on:click={applyStyle(style.id)} style="display: flex; flex-grow: 1;">
-        <Type class="pl-xsmall pr-xxsmall flex place-center">
-            <span class="layer-icon" style={styleCss(style)} />
-            <div class="field flex place-center" style="flex-grow: 1;">
-                <div
-                    bind:this={field}
-                    class="editName"
-                    transition:fade={{ duration: 100 }}>
-                    <Input
-                        bind:value={styleBeingEdited.name}
-                        class="mb-xxsmall" />
-                </div>
-                <span
-                    style="flex-grow: 1; user-select: none;">{style.name}</span>
-                <!-- <IconButton on:click={applyStyle(style.id)} iconName={IconPlus} /> -->
-            </div>
-        </Type>
-    </div>
-    <Type class="flex place-center">
-        <div
-            class="menu"
-            bind:this={menu}
-            style="left: {mousePosX}px; top: {mousePosY}px">
-            <div class="triangle" />
-            <span on:click={updateInstances(style.id)}>Refresh</span>
-            <span on:click={editLayerStyle(style.id)}>Edit</span>
-
-            <!-- <span on:click={updateLayerStyle(style.id)}>Update</span> -->
-
-            <!-- <a on:click={renameStyle(style.id, 'test')}>Rename</a> -->
-            <span on:click={editStyle(event, style)}>Rename</span>
-            <span class="divider" />
-            <span on:click={removeStyle(style.id)}>Delete</span>
-        </div>
-    </Type>
-</div>

@@ -1,3 +1,4 @@
+import { encode } from "../node_modules/base64-arraybuffer/lib/base64-arraybuffer.js"
 import { copyPasteProps, nodeRemovedByUser, pageNode, centerInViewport, sortNodesByPosition } from './helpers'
 
 // TODO: Check and update layer style previews when UI opens
@@ -47,16 +48,23 @@ const styleProps = [
 ]
 
 function copyPasteStyle(source, target?) {
-	return copyPasteProps(source, target, {
-		include: styleProps, exclude: ['autoRename', 'characters', 'fontName', 'fontSize', 'rotation', 'primaryAxisSizingMode',
-			'counterAxisSizingMode',
-			'primaryAxisAlignItems',
-			'counterAxisAlignItems',
-			'constrainProportions',
-			'layoutAlign',
-			'layoutGrow',
-			'layoutMode']
-	})
+	if (target) {
+		return copyPasteProps(source, target, {
+			include: styleProps,
+			exclude: ['autoRename', 'characters', 'fontName', 'fontSize', 'rotation', 'primaryAxisSizingMode',
+				'counterAxisSizingMode',
+				'primaryAxisAlignItems',
+				'counterAxisAlignItems',
+				'constrainProportions',
+				'layoutAlign',
+				'layoutGrow',
+				'layoutMode']
+		})
+	}
+	else {
+		return copyPasteProps(source)
+	}
+
 }
 
 
@@ -74,9 +82,12 @@ function addInstance(styleId, nodeId) {
 }
 
 // TODO: Need to add a limit, incase user tries to add too many layer styles at once
-function addLayerStyle(node) {
+async function addLayerStyle(node) {
+
 
 	var layerStyles: any = getLayerStyles()
+
+
 
 	for (let i = 0; i < layerStyles.length; i++) {
 		var layerStyle = layerStyles[i]
@@ -86,13 +97,15 @@ function addLayerStyle(node) {
 			figma.notify("Layer style already exists")
 			return
 		}
+
+
 	}
 
+	var newLayerStyle = { id: node.id, node: copyPasteStyle(node), name: node.name }
+
+	layerStyles.push(newLayerStyle)
 
 
-	var layerStyle = { id: node.id, node: copyPasteStyle(node), name: node.name }
-
-	layerStyles.push(layerStyle)
 
 	figma.root.setPluginData("styles", JSON.stringify(layerStyles))
 
@@ -123,6 +136,8 @@ function updateLayerStyle(id, name?, properties?, newId?) {
 function getLayerStyles(id?) {
 	var styles: any = figma.root.getPluginData("styles")
 
+
+
 	if (styles !== "") {
 		styles = JSON.parse(styles)
 	}
@@ -138,7 +153,6 @@ function getLayerStyles(id?) {
 		styles = newStyles[0]
 
 	}
-
 
 	return styles
 }
@@ -169,7 +183,7 @@ function updateInstances(selection, id?) {
 		}
 
 		//// This method is a lot slower!!!
-		// var instances = getInstances(thisNode.getPluginData("styleId"))
+		// var instances = getInstances(nodeBeingEdited.getPluginData("styleId"))
 
 		// for (var i = 0; i < instances.length; i++) {
 		// 	var instanceId = instances[i]
@@ -189,14 +203,15 @@ function updateInstances(selection, id?) {
 
 		// Look for node with matching styleID
 		var source = figma.getNodeById(styleId)
+		var layerStyle
 
 		if (source) {
-			var layerStyle = source
+			layerStyle = source
 			updateLayerStyle(styleId, null, copyPasteStyle(layerStyle));
 			copyPasteStyle(layerStyle, node)
 		}
 		else {
-			var layerStyle = getLayerStyles(styleId).node
+			layerStyle = getLayerStyles(styleId).node
 			copyPasteStyle(layerStyle, node)
 			console.log("Original node can't be found")
 		}
@@ -212,27 +227,43 @@ function clearLayerStyle() {
 	figma.closePlugin()
 }
 
-function createStyles(selection) {
-	if (selection.length > 0) {
-		selection = sortNodesByPosition(selection)
-		for (var i = 0; i < selection.length; i++) {
-			var node = selection[i]
-			node.setPluginData("styleId", node.id)
-			// var target = pasteProperties(figma.createFrame(), styles)
-			// node.setRelaunchData({ updateStyles: 'Refresh layers connected to this style' });
-			// figma.viewport.scrollAndZoomIntoView([target]);
+async function createStyles(selection) {
 
-			addLayerStyle(node)
+	if (selection.length > 0) {
+		if (selection.length <= 20) {
+			selection = sortNodesByPosition(selection)
+			for (var i = 0; i < selection.length; i++) {
+				var node = selection[i]
+				node.setPluginData("styleId", node.id)
+				// var target = pasteProperties(figma.createFrame(), styles)
+				// node.setRelaunchData({ updateStyles: 'Refresh layers connected to this style' });
+				// figma.viewport.scrollAndZoomIntoView([target]);
+				// console.log(node)
+				addLayerStyle(node)
+			}
+		}
+		else {
+			figma.notify("Limited to 20 layer styles at a time")
 		}
 	}
 	else {
-		figma.notify("No nodes selected")
+		figma.notify("No layers selected")
 	}
 }
 
 function applyLayerStyle(selection, styleId) {
 	// TODO: If node already has styleId and it matches it's node.id this means it is the master node for another style. Not sure how to fix this, as other style will look to this node for it. Possible fix is to change style ID of node.
+	var layerStyle
+	layerStyle = getLayerStyles(styleId).node
+	var source = figma.getNodeById(styleId)
+	if (selection.length <= 100) {
+		if (selection.length > 0) {
+			for (let i = 0; i < selection.length; i++) {
+				var node = selection[i]
+				node.setPluginData("styleId", styleId)
+				node.setRelaunchData({ detachLayerStyle: 'Removes association with layer style' })
 
+<<<<<<< HEAD
 	if (selection.length === 0) {
 		figma.notify("Please select one or more layers")
 	}
@@ -264,6 +295,39 @@ function applyLayerStyle(selection, styleId) {
 		figma.notify("Layer style applied")
 	}
 	
+=======
+				// var styleId = node.getPluginData("styleId")
+
+				// Look for node with matching styleID
+
+
+
+				if (source) {
+
+					layerStyle = source
+
+					copyPasteStyle(layerStyle, node)
+				}
+				else {
+
+					copyPasteStyle(layerStyle, node)
+					console.log("Original node can't be found")
+				}
+
+			}
+			figma.notify("Layer style applied")
+		}
+		else {
+			figma.notify("Please select a layer")
+		}
+	}
+	else {
+		figma.notify("Limited to 100 layers at a time")
+	}
+
+
+
+>>>>>>> fixed-memory-leak
 }
 
 function removeLayerStyle(styleId) {
@@ -305,58 +369,71 @@ function detachLayerStyle(node) {
 
 function postMessage() {
 	var styles = getLayerStyles();
-	var message = styles
-
-	figma.ui.postMessage(message)
+	figma.ui.postMessage(styles)
 }
+
+function debounce(func, wait, immediate?) {
+	var timeout;
+	return function () {
+		var context = this, args = arguments;
+		var later = function () {
+			timeout = null;
+			if (!immediate) func.apply(context, args);
+		};
+		var callNow = immediate && !timeout;
+		clearTimeout(timeout);
+		timeout = setTimeout(later, wait);
+		if (callNow) func.apply(context, args);
+	};
+};
 
 
 
 // This updates preview inside layer styles list
 // TODO: Need to be careful if something happens to node while it's being watched, for example if it's deleted
-var thisNode;
 
-figma.on("selectionchange", () => {
-	console.log("Selection changed")
+// The node being edited
+var nodeBeingEdited = null;
 
-	var node = figma.currentPage.selection[0]
-	if (node) {
-		if (node.getPluginData("styleId") !== "") {
-			console.log("Selection has a layer style")
-			if (node.id === node.getPluginData("styleId")) {
-				console.log("Selection is master")
-				thisNode = node
-			}
+function checkNodeBeingEdited(selection) {
+	if (selection && selection.length === 1) {
+		var node = selection[0]
+		if (node.id === node.getPluginData("styleId")) {
+			console.log("Selection is main layer style")
+			nodeBeingEdited = node
 		}
-	}
-	else {
-		thisNode = null
-	}
-})
-
-
-
-function update(thisNode) {
-
-	if (thisNode) {
-		var layerStyleId = thisNode.getPluginData("styleId")
-		var properties = copyPasteStyle(thisNode)
-		updateLayerStyle(layerStyleId, null, properties);
-		postMessage()
 	}
 
 }
 
-setInterval(() => {
-	update(thisNode)
+
+function updatePreview(nodeBeingEdited) {
+	if (nodeBeingEdited) {
+		var layerStyleId = nodeBeingEdited.getPluginData("styleId")
+		var properties = copyPasteStyle(nodeBeingEdited)
+		updateLayerStyle(layerStyleId, null, properties);
+		postMessage()
+	}
+}
 
 
-	// This live updates all instances with new style. Performance is a bit sluggish. Might be possible to speed it up if I stored an array of node ids which have layer style applied and then searched for node using getNodeById
-	// if (thisNode) {
-	// 	updateInstances(null, thisNode.id)
-	// }
-	// TODO: Remove plugin data from all nodes with matching style id
-}, 600)
+
+figma.on("selectionchange", () => {
+	checkNodeBeingEdited(figma.currentPage.selection)
+	console.log("Selection changed")
+
+	if (nodeBeingEdited) {
+		setInterval(() => {
+			updatePreview(nodeBeingEdited)
+		}, 600)
+	}
+	// If user unselects then change node being edited to null
+	if (figma.currentPage.selection.length === 0) {
+		nodeBeingEdited = null
+	}
+
+})
+
 
 
 
@@ -367,6 +444,7 @@ if (figma.command === "showStyles") {
 	figma.showUI(__html__, { width: 240, height: 360 });
 
 	postMessage()
+
 
 	// Calls to "parent.postMessage" from within the HTML page will trigger this
 	// callback. The callback will be passed the "pluginMessage" property of the
@@ -426,7 +504,7 @@ if (figma.command === "showStyles") {
 				// Update instances with new style id
 				var instances = getInstances(msg.id)
 
-				console.log(instances)
+
 				instances.map((node) => {
 					node.setPluginData("styleId", newStyleId)
 				})
@@ -456,6 +534,7 @@ if (figma.command === "showStyles") {
 
 if (figma.command === "createStyles") {
 	createStyles(figma.currentPage.selection)
+
 	figma.closePlugin()
 }
 
@@ -466,7 +545,7 @@ if (figma.command === "updateStyles") {
 	figma.closePlugin()
 }
 
-if (figma.command === "clearStyles") {
+if (figma.command === "clearLayerStyles") {
 	clearLayerStyle()
 }
 
