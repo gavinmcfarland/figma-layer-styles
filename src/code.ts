@@ -1,5 +1,5 @@
-import { nodeRemovedByUser, getPageNode, centerInViewport, sortNodesByPosition } from './helpers'
-import { copyPaste } from '@figlets/helpers'
+import { nodeRemovedByUser, centerInViewport, sortNodesByPosition } from './helpers'
+import { copyPaste, getPageNode } from '@figlets/helpers'
 // TODO: Check and update layer style previews when UI opens
 // TODO: When editing a layer style, check that the node is a component and if it's been deleted by user
 

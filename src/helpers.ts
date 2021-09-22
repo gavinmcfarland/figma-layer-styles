@@ -146,15 +146,6 @@ export function pageId(node) {
     }
 }
 
-export function getPageNode(node) {
-    if (node.parent.type === "PAGE") {
-        return node.parent
-    }
-    else {
-        return getPageNode(node.parent)
-    }
-}
-
 export function centerInViewport(node) {
     // Position newly created table in center of viewport
     node.x = figma.viewport.center.x - (node.width / 2)
