@@ -1,6 +1,5 @@
-import { encode } from "../node_modules/base64-arraybuffer/lib/base64-arraybuffer.js"
-import { copyPasteProps, nodeRemovedByUser, pageNode, centerInViewport, sortNodesByPosition } from './helpers'
-
+import { nodeRemovedByUser, pageNode, centerInViewport, sortNodesByPosition } from './helpers'
+import { copyPaste } from '@figlets/helpers'
 // TODO: Check and update layer style previews when UI opens
 // TODO: When editing a layer style, check that the node is a component and if it's been deleted by user
 
@@ -49,7 +48,7 @@ const styleProps = [
 
 function copyPasteStyle(source, target?) {
 	if (target) {
-		return copyPasteProps(source, target, {
+		return copyPaste(source, target, {
 			include: styleProps,
 			exclude: ['autoRename', 'characters', 'fontName', 'fontSize', 'rotation', 'primaryAxisSizingMode',
 				'counterAxisSizingMode',
@@ -62,7 +61,7 @@ function copyPasteStyle(source, target?) {
 		})
 	}
 	else {
-		return copyPasteProps(source)
+		return copyPaste(source, {})
 	}
 
 }
