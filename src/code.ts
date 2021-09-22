@@ -1,4 +1,4 @@
-import { nodeRemovedByUser, pageNode, centerInViewport, sortNodesByPosition } from './helpers'
+import { nodeRemovedByUser, getPageNode, centerInViewport, sortNodesByPosition } from './helpers'
 import { copyPaste } from '@figlets/helpers'
 // TODO: Check and update layer style previews when UI opens
 // TODO: When editing a layer style, check that the node is a component and if it's been deleted by user
@@ -444,7 +444,7 @@ if (figma.command === "showStyles") {
 			if (!nodeRemovedByUser(node)) {
 				figma.viewport.scrollAndZoomIntoView([node])
 				figma.viewport.zoom = 0.25
-				figma.currentPage = pageNode(node)
+				figma.currentPage = getPageNode(node)
 				figma.currentPage.selection = [node]
 			}
 			else {

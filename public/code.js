@@ -38,12 +38,12 @@ function nodeRemovedByUser(node) {
         return true;
     }
 }
-function pageNode(node) {
+function getPageNode(node) {
     if (node.parent.type === "PAGE") {
         return node.parent;
     }
     else {
-        return pageNode(node.parent);
+        return getPageNode(node.parent);
     }
 }
 function centerInViewport(node) {
@@ -56,7 +56,6 @@ function sortNodesByPosition(nodes) {
     result.sort((current, next) => current.x - next.x);
     return result.sort((current, next) => current.y - next.y);
 }
-//# sourceMappingURL=helpers.js.map
 
 function unwrapExports (x) {
 	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
@@ -1168,7 +1167,7 @@ if (figma.command === "showStyles") {
             if (!nodeRemovedByUser(node)) {
                 figma.viewport.scrollAndZoomIntoView([node]);
                 figma.viewport.zoom = 0.25;
-                figma.currentPage = pageNode(node);
+                figma.currentPage = getPageNode(node);
                 figma.currentPage.selection = [node];
             }
             else {
@@ -1227,4 +1226,3 @@ if (figma.command === "detachLayerStyle") {
     figma.notify("Layer style detached");
     figma.closePlugin();
 }
-//# sourceMappingURL=code.js.map
