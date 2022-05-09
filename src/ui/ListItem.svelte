@@ -547,7 +547,7 @@
     }
 
     .list-item:hover {
-        background-color: #daebf7;
+        background-color: var(--figma-color-bg-hover, #daebf7);
     }
 
     .layer-icon {
@@ -564,10 +564,10 @@
     }
 
     :global(.blue-bg) {
-        background-color: #daebf7;
+        background-color: var(--figma-color-bg-hover, #daebf7);
     }
     .divider {
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        border-top: 1px solid var(--figma-color-border-tertairy, rgba(255, 255, 255, 0.2));
         display: block;
         margin-top: 8px;
         margin-bottom: 8px;

@@ -20,7 +20,7 @@
 	} from "figma-plugin-ds-svelte";
 
 	import Styles from "./Styles.svelte";
-	
+
 	//this is a reactive variable that will return false when a value is selected from
 	//the select menu, its value is bound to the primary buttons disabled prop
 	// $: disabled = selectedShape === null;
@@ -94,11 +94,24 @@
 
 <style>
 	/* Add additional global or scoped styles here */
+	:global(input) {
+		background-color: var(--figma-color-bg, white) !important;
+		color: var(--figma-color-text, black) !important;
+	}
+	:global(body) {
+		background-color: var(--figma-color-bg, white);
+	}
+	:global(svg) {
+		fill: var(--figma-color-text, black) !important;
+	}
+	:global(.type) {
+		color: var(--figma-color-text, black) !important;
+	}
 	:global(.bb) {
-		border-bottom: 1px solid var(--grey);
+		border-bottom: 1px solid var(--figma-color-border, var(--grey));
 	}
 	:global(.bt) {
-		border-top: 1px solid var(--grey);
+		border-top: 1px solid var(--figma-color-border, var(--grey));
 	}
 	:global(.place-center) {
 		align-items: center;
@@ -114,7 +127,7 @@
 		left: 0;
 		width: 100%;
 		place-content: flex-end;
-		background-color: white;
+		background-color: var(--figma-color-bg, white);
 	}
 
 	/* :gloabl(.action-bar > *) {
@@ -140,5 +153,9 @@
 
 	:global(.show) {
 		display: block !important;
+	}
+
+	:global(.IconButton:hover) {
+		background: var(--figma-color-bg-hover, var(--hover-fill)) !important;
 	}
 </style>

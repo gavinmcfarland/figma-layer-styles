@@ -1,0 +1,19 @@
+{
+    "name": "Layer Styles",
+    "id": "908303483495091267",
+    "api": "1.0.0",
+    "main": "dist/code.js",
+    "ui": "dist/ui.html",
+    "menu": [
+        {
+            "name": "Show Layer Styles",
+            "command": "showStyles"
+        }
+    ],
+    "relaunchButtons": [
+        {"command": "detachLayerStyle", "name": "Detach Layer Style", "multipleSelection": true}
+    ],
+    "editorType": [
+        "figma"
+    ]
+}

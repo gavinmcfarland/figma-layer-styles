@@ -38,14 +38,6 @@ function nodeRemovedByUser(node) {
         return true;
     }
 }
-function getPageNode(node) {
-    if (node.parent.type === "PAGE") {
-        return node.parent;
-    }
-    else {
-        return getPageNode(node.parent);
-    }
-}
 function centerInViewport(node) {
     // Position newly created table in center of viewport
     node.x = figma.viewport.center.x - (node.width / 2);
@@ -81,13 +73,14 @@ function setClientStorageAsync(key, data) {
 async function updateClientStorageAsync(key, callback) {
     var data = await figma.clientStorage.getAsync(key);
     data = callback(data);
-    await figma.clientStorage.setAsync(key, data);
     // What should happen if user doesn't return anything in callback?
     if (!data) {
         data = null;
     }
-    // node.setPluginData(key, JSON.stringify(data))
-    return data;
+    else {
+        figma.clientStorage.setAsync(key, data);
+        return data;
+    }
 }
 
 const eventListeners = [];
@@ -216,6 +209,8 @@ const readOnly = [
 * @param args - Either options or a callback.
 * @returns A node or object with the properties copied over
 */
+// FIXME: When an empty objet is provided, copy over all properties including width and height
+// FIXME: Don't require a setter in order to copy property. Should be able to copy from an object literal for example.
 function copyPaste(source, target, ...args) {
     var targetIsEmpty;
     if (target && Object.keys(target).length === 0 && target.constructor === Object) {
@@ -340,21 +335,70 @@ function copyPaste(source, target, ...args) {
     return obj;
 }
 
-// TODO: Change so that it can convert any node to any type?
 /**
- * Convert a node to a component
+ * Converts an instance, component, or rectangle to a frame
+ * @param {SceneNode} node The node you want to convert to a frame
+ * @returns Returns the new node as a frame
+ */
+function convertToFrame(node) {
+    if (node.type === "INSTANCE") {
+        return node.detachInstance();
+    }
+    if (node.type === "COMPONENT") {
+        let parent = node.parent;
+        // This method preserves plugin data and relaunch data
+        console.log("hello");
+        let frame = node.createInstance().detachInstance();
+        parent.appendChild(frame);
+        copyPaste(node, frame, { include: ['x', 'y'] });
+        // Treat like native method
+        figma.currentPage.appendChild(frame);
+        node.remove();
+        return frame;
+    }
+    if (node.type === "RECTANGLE" || node.type === "GROUP") {
+        let frame = figma.createFrame();
+        // FIXME: Add this into copyPaste helper
+        frame.resizeWithoutConstraints(node.width, node.height);
+        copyPaste(node, frame);
+        node.remove();
+        return frame;
+    }
+    if (node.type === "FRAME") {
+        // Don't do anything to it if it's a frame
+        return node;
+    }
+}
+
+/**
+ * Moves children from one node to another
+ * @param {SceneNode} source The node you want to move children from
+ * @param {SceneNode} target The node you want to move children to
+ * @returns Returns the new target with its children
+ */
+function moveChildren(source, target) {
+    let children = source.children;
+    let length = children.length;
+    for (let i = 0; i < length; i++) {
+        let child = children[i];
+        target.appendChild(child);
+    }
+    return target;
+}
+
+/**
+ * Converts an instance, frame, or rectangle to a component
+ * @param {SceneNode} node The node you want to convert to a component
+ * @returns Returns the new node as a component
  */
 // FIXME: Typescript says detachInstance() doesn't exist on SceneNode & ChildrenMixin 
 function convertToComponent(node) {
     const component = figma.createComponent();
-    if (node.type === "INSTANCE") {
-        node = node.detachInstance();
-    }
+    node = convertToFrame(node);
+    // FIXME: Add this into copyPaste helper
     component.resizeWithoutConstraints(node.width, node.height);
-    for (const child of node.children) {
-        component.appendChild(child);
-    }
     copyPaste(node, component);
+    moveChildren(node, component);
     node.remove();
     return component;
 }
@@ -457,6 +501,49 @@ function ungroup(node, parent) {
 }
 
 /**
+ * Converts a hex, or array of hexes into Paints[]
+ * Can be used to fill a node
+ * e.g node.fills = hexToPaints("#ff0000")
+ * @param {string | string[] } hex
+ */
+function hexToPaints(hexes) {
+    if (typeof hexes === 'string') {
+        hexes = [hexes];
+    }
+    const Paints = hexes.map(hex => {
+        let color = hexToRgb(hex);
+        if (color == null) {
+            throw ('Color is null');
+        }
+        else {
+            let paint = {
+                type: "SOLID",
+                color: color.color,
+                opacity: color.opacity
+            };
+            return paint;
+        }
+    });
+    return Paints;
+}
+function hexToRgb(hex) {
+    hex = hex.replace('#', '');
+    hex.length == 3 ? hex += "F" : null;
+    hex.length == 4 ? hex = hex.replace(new RegExp("([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])"), "$1$1$2$2$3$3$4$4") : null;
+    hex.length == 6 ? hex += "FF" : null;
+    console.log(hex);
+    var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        color: {
+            r: parseInt(result[1], 16) / 255,
+            g: parseInt(result[2], 16) / 255,
+            b: parseInt(result[3], 16) / 255
+        },
+        opacity: parseFloat((parseInt(result[4], 16) / 255).toFixed(2))
+    } : null;
+}
+
+/**
  * Returns true if the node is nested inside an instance. It does not include the instance itself.
  * @param {SceneNode} node A node you want to check
  * @returns Returns true if inside an instance
@@ -488,7 +575,7 @@ function isInsideInstance(node) {
 function getParentInstance(node) {
     const parent = node.parent;
     if (node.type === "PAGE")
-        return false;
+        return undefined;
     if (parent.type === "INSTANCE") {
         return parent;
     }
@@ -547,43 +634,45 @@ function getNodeLocation(node, container = figma.currentPage, location = []) {
  * @param {SceneNode & ChildrenMixin } node A node with children
  * @returns Returns the counterpart component node
  */
+// TODO: Should there be two functions?, one that gets original component, and one that gets prototype 
+// Using getTopInstance may return counterpart which has been swapped by the user
 function getInstanceCounterpartUsingLocation(node, parentInstance = getParentInstance(node), location = getNodeLocation(node, parentInstance), parentComponentNode = parentInstance === null || parentInstance === void 0 ? void 0 : parentInstance.mainComponent) {
-    location.shift();
-    function loopChildren(node, d = 1) {
-        var nodeIndex = location[d];
-        if (node.children) {
-            for (var i = 0; i < node.children.length; i++) {
-                var child = node.children[i];
+    if (location) {
+        location.shift();
+        // console.log(location)
+        function loopChildren(children, d = 0) {
+            for (var i = 0; i < children.length; i++) {
+                var child = children[i];
+                var nodeIndex = location[d];
+                // console.log({ current: getNodeIndex(child), desired: nodeIndex }, child.name)
                 if (getNodeIndex(child) === nodeIndex) {
+                    // console.log(">>>  ", child.name)
+                    // console.log(location.length - 1, d)
+                    // If last in array
                     if (location.length - 1 === d) {
+                        // console.log({ current: getNodeIndex(child), desired: nodeIndex })
                         return child;
                     }
                     else {
-                        return loopChildren(child, d + 1);
+                        if (child.children) {
+                            // console.log({ current: getNodeIndex(child), desired: nodeIndex })
+                            return loopChildren(child.children, d + 1);
+                        }
+                        // else {
+                        //     console.log({ current: getNodeIndex(child), desired: nodeIndex })
+                        //     console.log(child)
+                        //     // return child
+                        // }
                     }
                 }
             }
         }
+        if (parentComponentNode && parentComponentNode.children) {
+            return loopChildren(parentComponentNode.children);
+        }
         else {
-            return node;
+            return node.mainComponent;
         }
-    }
-    if (parentComponentNode && parentComponentNode.children) {
-        for (var i = 0; i < parentComponentNode.children.length; i++) {
-            var componentNode = parentComponentNode.children[i];
-            var nodeIndex = location[0];
-            if (getNodeIndex(componentNode) === nodeIndex) {
-                if (location.length - 1 === 0) {
-                    return componentNode;
-                }
-                else {
-                    return loopChildren(componentNode);
-                }
-            }
-        }
-    }
-    else {
-        return node.mainComponent;
     }
 }
 
@@ -646,7 +735,7 @@ function getNoneGroupParent(node) {
 
 const nodeToObject = (node, withoutRelations, removeConflicts) => {
     const props = Object.entries(Object.getOwnPropertyDescriptors(node.__proto__));
-    const blacklist = ['parent', 'children', 'removed', 'masterComponent'];
+    const blacklist = ['parent', 'children', 'removed', 'masterComponent', 'horizontalPadding', 'verticalPadding'];
     const obj = { id: node.id, type: node.type };
     for (const [name, prop] of props) {
         if (prop.get && !blacklist.includes(name)) {
@@ -736,7 +825,8 @@ function getOverrides(node, prop) {
                 && prop !== "remote"
                 && prop !== "defaultVariant"
                 && prop !== "hasMissingFont"
-                && prop !== "exportSettings") {
+                && prop !== "exportSettings"
+                && prop !== "autoRename") {
                 if (JSON.stringify(node[prop]) !== JSON.stringify(componentNode[prop])) {
                     return node[prop];
                 }
@@ -764,7 +854,8 @@ function getOverrides(node, prop) {
                     && key !== "remote"
                     && key !== "defaultVariant"
                     && key !== "hasMissingFont"
-                    && key !== "exportSettings") {
+                    && key !== "exportSettings"
+                    && key !== "autoRename") {
                     if (JSON.stringify(properties[key]) !== JSON.stringify(componentNode[key])) {
                         overriddenProps[key] = value;
                     }
@@ -781,6 +872,20 @@ function getOverrides(node, prop) {
 }
 
 /**
+ * Returns the page node of the selected node
+ * @param {SceneNode} node A node
+ * @returns The page node
+ */
+function getPageNode(node) {
+    if (node.parent.type === "PAGE") {
+        return node.parent;
+    }
+    else {
+        return getPageNode(node.parent);
+    }
+}
+
+/**
  * Returns the top most instance that a node belongs to
  * @param {SceneNode} node A node
  * @returns The top most instance node
@@ -789,14 +894,120 @@ function getTopInstance(node) {
     if (node.type === "PAGE")
         return null;
     if (isInsideInstance(node)) {
-        return getTopInstance(node.parent);
+        if (isInsideInstance(node.parent)) {
+            return getTopInstance(node.parent);
+        }
+        else {
+            return node.parent;
+        }
+    }
+}
+
+// TODO: Create a replaceNode helper
+/**
+ * Makes any selection of nodes a component, the same as it happens in the editor
+ * @param {SceneNode} node The node you want to make into a component
+ * @returns Returns the new node as a component
+ */
+function makeComponent(nodes) {
+    // If not given an array, put into an array
+    if (!Array.isArray(nodes)) {
+        nodes = [nodes];
+    }
+    let parent = nodes[0].parent;
+    if (nodes.length === 1 && (nodes[0].type === "FRAME" || nodes[0].type === "GROUP")) {
+        // let nodeIndex = getNodeIndex(nodes[0])
+        let component = convertToComponent(nodes[0]);
+        // parent.insertChild(nodeIndex, component)
+        return component;
     }
     else {
-        return node;
+        let component = figma.createComponent();
+        let group = figma.group(nodes, parent);
+        component.resizeWithoutConstraints(group.width, group.height);
+        copyPaste(group, component, { include: ['x', 'y'] });
+        group.x = 0;
+        group.y = 0;
+        console.log("where the children go");
+        if (nodes.length === 1) {
+            component.name = nodes[0].name;
+        }
+        ungroup(group, component);
+        return component;
+    }
+}
+
+function isFunction(functionToCheck) {
+    return functionToCheck && {}.toString.call(functionToCheck) === '[object Function]';
+}
+// TODO: Add option to ignore width and height?
+// TODO: Could do with refactoring
+/**
+ * Replace any node with another node
+ * @param {SceneNode} target The node you want to replace
+ * @param {SceneNode | Callback} source What you want to replace the node with
+ * @returns Returns the new node as a component
+ */
+function replace(target, source) {
+    let isSelection = false;
+    let targetCopy;
+    let clonedSelection = [];
+    let nodeIndex;
+    let parent;
+    // If it's a selection we need to create a dummy node that represents the whole of the selection to base the properties off
+    if (Array.isArray(target)) {
+        nodeIndex = getNodeIndex(target[0]);
+        parent = target[0].parent;
+        // Clone the target so the actual target doesn't move
+        for (let i = 0; i < target.length; i++) {
+            let clone = target[i].clone();
+            clonedSelection.push(clone);
+        }
+        // parent.insertChild(clone, nodeIndex)
+        targetCopy = figma.group(clonedSelection, parent, nodeIndex);
+        // I think this needs to happen because when you create a clone it doesn't get inserted into the same location as the original node?
+        targetCopy.x = target[0].x;
+        targetCopy.y = target[0].y;
+        isSelection = true;
+        nodeIndex = getNodeIndex(targetCopy);
+        parent = targetCopy.parent;
+    }
+    else {
+        targetCopy = nodeToObject(target);
+        nodeIndex = getNodeIndex(target);
+        parent = target.parent;
+    }
+    let targetWidth = targetCopy.width;
+    let targetHeight = targetCopy.height;
+    let result;
+    if (isFunction(source)) {
+        result = source(target);
+    }
+    else {
+        result = source;
+    }
+    if (result) {
+        // FIXME: Add this into copyPaste helper
+        result.resizeWithoutConstraints(targetWidth, targetHeight);
+        copyPaste(targetCopy, result, { include: ['x', 'y', 'constraints'] });
+        // copyPaste not working properly so have to manually copy x and y
+        result.x = targetCopy.x;
+        result.y = targetCopy.y;
+        console.log(parent);
+        parent.insertChild(nodeIndex, result);
+        if (isSelection) {
+            targetCopy.remove();
+            // clonedSelection gets removed when this node gets removed
+        }
+        if (figma.getNodeById(target.id)) {
+            target.remove();
+        }
+        return result;
     }
 }
 
 exports.convertToComponent = convertToComponent;
+exports.convertToFrame = convertToFrame;
 exports.copyPaste = copyPaste;
 exports.dispatchEvent = dispatchEvent;
 exports.getClientStorageAsync = getClientStorageAsync;
@@ -807,13 +1018,18 @@ exports.getNodeIndex = getNodeIndex;
 exports.getNodeLocation = getNodeLocation;
 exports.getNoneGroupParent = getNoneGroupParent;
 exports.getOverrides = getOverrides;
+exports.getPageNode = getPageNode;
 exports.getParentInstance = getParentInstance;
 exports.getPluginData = getPluginData;
 exports.getTopInstance = getTopInstance;
 exports.handleEvent = handleEvent;
+exports.hexToPaints = hexToPaints;
+exports.hexToRgb = hexToRgb;
 exports.isInsideInstance = isInsideInstance;
+exports.makeComponent = makeComponent;
 exports.nodeToObject = nodeToObject;
 exports.removeChildren = removeChildren;
+exports.replace = replace;
 exports.resize = resize;
 exports.setClientStorageAsync = setClientStorageAsync;
 exports.setPluginData = setPluginData;
@@ -824,29 +1040,35 @@ exports.updatePluginData = updatePluginData;
 
 unwrapExports(dist);
 var dist_1 = dist.convertToComponent;
-var dist_2 = dist.copyPaste;
-var dist_3 = dist.dispatchEvent;
-var dist_4 = dist.getClientStorageAsync;
-var dist_5 = dist.getInstanceCounterpart;
-var dist_6 = dist.getInstanceCounterpartUsingLocation;
-var dist_7 = dist.getNodeDepth;
-var dist_8 = dist.getNodeIndex;
-var dist_9 = dist.getNodeLocation;
-var dist_10 = dist.getNoneGroupParent;
-var dist_11 = dist.getOverrides;
-var dist_12 = dist.getParentInstance;
-var dist_13 = dist.getPluginData;
-var dist_14 = dist.getTopInstance;
-var dist_15 = dist.handleEvent;
-var dist_16 = dist.isInsideInstance;
-var dist_17 = dist.nodeToObject;
-var dist_18 = dist.removeChildren;
-var dist_19 = dist.resize;
-var dist_20 = dist.setClientStorageAsync;
-var dist_21 = dist.setPluginData;
-var dist_22 = dist.ungroup;
-var dist_23 = dist.updateClientStorageAsync;
-var dist_24 = dist.updatePluginData;
+var dist_2 = dist.convertToFrame;
+var dist_3 = dist.copyPaste;
+var dist_4 = dist.dispatchEvent;
+var dist_5 = dist.getClientStorageAsync;
+var dist_6 = dist.getInstanceCounterpart;
+var dist_7 = dist.getInstanceCounterpartUsingLocation;
+var dist_8 = dist.getNodeDepth;
+var dist_9 = dist.getNodeIndex;
+var dist_10 = dist.getNodeLocation;
+var dist_11 = dist.getNoneGroupParent;
+var dist_12 = dist.getOverrides;
+var dist_13 = dist.getPageNode;
+var dist_14 = dist.getParentInstance;
+var dist_15 = dist.getPluginData;
+var dist_16 = dist.getTopInstance;
+var dist_17 = dist.handleEvent;
+var dist_18 = dist.hexToPaints;
+var dist_19 = dist.hexToRgb;
+var dist_20 = dist.isInsideInstance;
+var dist_21 = dist.makeComponent;
+var dist_22 = dist.nodeToObject;
+var dist_23 = dist.removeChildren;
+var dist_24 = dist.replace;
+var dist_25 = dist.resize;
+var dist_26 = dist.setClientStorageAsync;
+var dist_27 = dist.setPluginData;
+var dist_28 = dist.ungroup;
+var dist_29 = dist.updateClientStorageAsync;
+var dist_30 = dist.updatePluginData;
 
 // TODO: Check and update layer style previews when UI opens
 // TODO: When editing a layer style, check that the node is a component and if it's been deleted by user
@@ -854,60 +1076,65 @@ const styleProps = [
     // 'constrainProportions',
     // 'layoutAlign',
     // 'layoutGrow',
-    'opacity',
-    'blendMode',
-    'effects',
-    'effectStyleId',
+    "opacity",
+    "blendMode",
+    "effects",
+    "effectStyleId",
     // 'expanded',
-    'backgrounds',
-    'backgroundStyleId',
-    'fills',
-    'strokes',
-    'strokeWeight',
-    'strokeMiterLimit',
-    'strokeAlign',
-    'strokeCap',
-    'strokeJoin',
-    'dashPattern',
-    'fillStyleId',
-    'strokeStyleId',
-    'cornerRadius',
-    'cornerSmoothing',
-    'topLeftRadius',
-    'topRightRadius',
-    'bottomLeftRadius',
-    'bottomRightRadius',
+    "backgrounds",
+    "backgroundStyleId",
+    "fills",
+    "strokes",
+    "strokeWeight",
+    "strokeMiterLimit",
+    "strokeAlign",
+    "strokeCap",
+    "strokeJoin",
+    "dashPattern",
+    "fillStyleId",
+    "strokeStyleId",
+    "cornerRadius",
+    "cornerSmoothing",
+    "topLeftRadius",
+    "topRightRadius",
+    "bottomLeftRadius",
+    "bottomRightRadius",
     // 'layoutMode',
     // 'primaryAxisSizingMode',
     // 'counterAxisSizingMode',
     // 'primaryAxisAlignItems',
     // 'counterAxisAlignItems',
-    'paddingLeft',
-    'paddingRight',
-    'paddingTop',
-    'paddingBottom',
-    'itemSpacing',
-    'layoutGrids',
-    'gridStyleId'
-    // 'clipsContent',
-    // 'guides'
+    "paddingLeft",
+    "paddingRight",
+    "paddingTop",
+    "paddingBottom",
+    "itemSpacing",
+    "layoutGrids",
+    "gridStyleId",
 ];
 function copyPasteStyle(source, target) {
     if (target) {
-        return dist_2(source, target, {
+        return dist_3(source, target, {
             include: styleProps,
-            exclude: ['autoRename', 'characters', 'fontName', 'fontSize', 'rotation', 'primaryAxisSizingMode',
-                'counterAxisSizingMode',
-                'primaryAxisAlignItems',
-                'counterAxisAlignItems',
-                'constrainProportions',
-                'layoutAlign',
-                'layoutGrow',
-                'layoutMode']
+            exclude: [
+                "autoRename",
+                "characters",
+                "fontName",
+                "fontSize",
+                "rotation",
+                "primaryAxisSizingMode",
+                "counterAxisSizingMode",
+                "primaryAxisAlignItems",
+                "counterAxisAlignItems",
+                "constrainProportions",
+                "layoutAlign",
+                "layoutGrow",
+                "layoutMode",
+            ],
         });
     }
     else {
-        return dist_2(source, {});
+        return dist_3(source, {});
     }
 }
 function getInstances(styleId) {
@@ -925,7 +1152,11 @@ function addLayerStyle(node) {
                 return;
             }
         }
-        var newLayerStyle = { id: node.id, node: copyPasteStyle(node), name: node.name };
+        var newLayerStyle = {
+            id: node.id,
+            node: copyPasteStyle(node),
+            name: node.name,
+        };
         layerStyles.push(newLayerStyle);
         figma.root.setPluginData("styles", JSON.stringify(layerStyles));
     });
@@ -974,7 +1205,7 @@ function updateInstances(selection, id) {
         var pages = figma.root.children;
         var length = pages.length;
         for (let i = 0; i < length; i++) {
-            pages[i].findAll(node => {
+            pages[i].findAll((node) => {
                 if (node.getPluginData("styleId") === id) {
                     nodes.push(node);
                 }
@@ -1046,7 +1277,9 @@ function applyLayerStyle(selection, styleId) {
             for (let i = 0; i < selection.length; i++) {
                 var node = selection[i];
                 node.setPluginData("styleId", styleId);
-                node.setRelaunchData({ detachLayerStyle: 'Removes association with layer style' });
+                node.setRelaunchData({
+                    detachLayerStyle: "Removes association with layer style",
+                });
                 // var styleId = node.getPluginData("styleId")
                 // Look for node with matching styleID
                 if (source) {
@@ -1071,7 +1304,7 @@ function applyLayerStyle(selection, styleId) {
 function removeLayerStyle(styleId) {
     var styles = getLayerStyles();
     // Remove layer style with matching node
-    styles.splice(styles.findIndex(node => {
+    styles.splice(styles.findIndex((node) => {
         return node.id === styleId;
     }), 1);
     // Set layer styles again
@@ -1086,7 +1319,7 @@ function removeLayerStyle(styleId) {
     // 		}
     // 	})
     // }
-    figma.root.findAll(node => {
+    figma.root.findAll((node) => {
         if (node.getPluginData("styleId") === styleId) {
             node.setPluginData("styleId", "");
         }
@@ -1137,12 +1370,12 @@ figma.on("selectionchange", () => {
 });
 if (figma.command === "showStyles") {
     // This shows the HTML page in "ui.html".
-    figma.showUI(__html__, { width: 240, height: 360 });
+    figma.showUI(__html__, { width: 240, height: 360, themeColors: true });
     postMessage();
     // Calls to "parent.postMessage" from within the HTML page will trigger this
     // callback. The callback will be passed the "pluginMessage" property of the
     // posted message.
-    figma.ui.onmessage = msg => {
+    figma.ui.onmessage = (msg) => {
         if (msg.type === "add-style") {
             createStyles(figma.currentPage.selection);
             postMessage();
@@ -1167,7 +1400,7 @@ if (figma.command === "showStyles") {
             if (!nodeRemovedByUser(node)) {
                 figma.viewport.scrollAndZoomIntoView([node]);
                 figma.viewport.zoom = 0.25;
-                figma.currentPage = getPageNode(node);
+                figma.currentPage = dist_13(node);
                 figma.currentPage.selection = [node];
             }
             else {

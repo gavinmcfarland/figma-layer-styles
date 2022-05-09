@@ -16,7 +16,7 @@ import htmlBundle from 'rollup-plugin-html-bundle';
 const production = !process.env.ROLLUP_WATCH;
 
 export default [{
-	input: 'src/main.js',
+	input: 'src/ui/main.js',
 	output: {
 		format: 'iife',
 		name: 'ui',
@@ -45,8 +45,8 @@ export default [{
 			plugins: [cssnano()]
 		}),
 		htmlBundle({
-			template: 'src/template.html',
-			target: 'public/index.html',
+			template: 'src/ui/template.html',
+			target: 'dist/ui.html',
 			inline: true
 		}),
 
@@ -67,9 +67,9 @@ export default [{
 	}
 },
 {
-	input: 'src/code.ts',
+	input: 'src/code/code.ts',
 	output: {
-		file: 'public/code.js',
+		file: 'dist/code.js',
 		format: 'cjs',
 		// format: 'iife',
 		name: 'code'
