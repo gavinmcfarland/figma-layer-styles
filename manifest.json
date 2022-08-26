@@ -15,5 +15,6 @@
     ],
     "editorType": [
         "figma"
-    ]
+    ],
+    "enableProposedApi": true
 }

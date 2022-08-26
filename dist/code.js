@@ -48,6 +48,7 @@ function sortNodesByPosition(nodes) {
     result.sort((current, next) => current.x - next.x);
     return result.sort((current, next) => current.y - next.y);
 }
+//# sourceMappingURL=helpers.js.map
 
 function unwrapExports (x) {
 	return x && x.__esModule && Object.prototype.hasOwnProperty.call(x, 'default') ? x['default'] : x;
@@ -1355,19 +1356,32 @@ function updatePreview(nodeBeingEdited) {
         postMessage();
     }
 }
+// figma.on("selectionchange", () => {
+// 	checkNodeBeingEdited(figma.currentPage.selection);
+// 	console.log("Selection changed");
+// 	if (nodeBeingEdited) {
+// 		setInterval(() => {
+// 			updatePreview(nodeBeingEdited);
+// 		}, 600);
+// 	}
+// 	// If user unselects then change node being edited to null
+// 	if (figma.currentPage.selection.length === 0) {
+// 		nodeBeingEdited = null;
+// 	}
+// });
 figma.on("selectionchange", () => {
     checkNodeBeingEdited(figma.currentPage.selection);
     console.log("Selection changed");
-    if (nodeBeingEdited) {
-        setInterval(() => {
-            updatePreview(nodeBeingEdited);
-        }, 600);
-    }
     // If user unselects then change node being edited to null
     if (figma.currentPage.selection.length === 0) {
         nodeBeingEdited = null;
     }
 });
+figma.on("nodechange", (event) => __awaiter(void 0, void 0, void 0, function* () {
+    if (nodeBeingEdited) {
+        updatePreview(nodeBeingEdited);
+    }
+}));
 if (figma.command === "showStyles") {
     // This shows the HTML page in "ui.html".
     figma.showUI(__html__, { width: 240, height: 360, themeColors: true });

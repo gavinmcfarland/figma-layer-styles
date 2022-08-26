@@ -2,7 +2,7 @@ import {
 	nodeRemovedByUser,
 	centerInViewport,
 	sortNodesByPosition,
-} from "../helpers";
+} from "./helpers";
 import { copyPaste, getPageNode } from "@fignite/helpers";
 // TODO: Check and update layer style previews when UI opens
 // TODO: When editing a layer style, check that the node is a component and if it's been deleted by user
@@ -354,18 +354,34 @@ function updatePreview(nodeBeingEdited) {
 	}
 }
 
+// figma.on("selectionchange", () => {
+// 	checkNodeBeingEdited(figma.currentPage.selection);
+// 	console.log("Selection changed");
+
+// 	if (nodeBeingEdited) {
+// 		setInterval(() => {
+// 			updatePreview(nodeBeingEdited);
+// 		}, 600);
+// 	}
+// 	// If user unselects then change node being edited to null
+// 	if (figma.currentPage.selection.length === 0) {
+// 		nodeBeingEdited = null;
+// 	}
+// });
+
 figma.on("selectionchange", () => {
 	checkNodeBeingEdited(figma.currentPage.selection);
 	console.log("Selection changed");
 
-	if (nodeBeingEdited) {
-		setInterval(() => {
-			updatePreview(nodeBeingEdited);
-		}, 600);
-	}
 	// If user unselects then change node being edited to null
 	if (figma.currentPage.selection.length === 0) {
 		nodeBeingEdited = null;
+	}
+});
+
+figma.on("nodechange", async (event) => {
+	if (nodeBeingEdited) {
+		updatePreview(nodeBeingEdited);
 	}
 });
 
