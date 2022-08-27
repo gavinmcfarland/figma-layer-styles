@@ -1071,8 +1071,6 @@ var dist_28 = dist.ungroup;
 var dist_29 = dist.updateClientStorageAsync;
 var dist_30 = dist.updatePluginData;
 
-// TODO: Check and update layer style previews when UI opens
-// TODO: When editing a layer style, check that the node is a component and if it's been deleted by user
 const styleProps = [
     // 'constrainProportions',
     // 'layoutAlign',
@@ -1219,6 +1217,158 @@ function updateInstances(selection, id) {
         // 	nodes.push(figma.getNodeById(instanceId))
         // }
     }
+    // var nodes;
+    // if (selection) {
+    // 	nodes = selection;
+    // }
+    // if (id) {
+    // 	nodes = [];
+    // 	let nodeIds = [
+    // 		"3:241",
+    // 		"3:242",
+    // 		"3:245",
+    // 		"3:246",
+    // 		"3:247",
+    // 		"3:248",
+    // 		"3:251",
+    // 		"3:252",
+    // 		"3:253",
+    // 		"3:254",
+    // 		"3:257",
+    // 		"3:258",
+    // 		"3:259",
+    // 		"3:260",
+    // 		"3:263",
+    // 		"3:264",
+    // 		"3:267",
+    // 		"3:268",
+    // 		"3:271",
+    // 		"3:275",
+    // 		"3:276",
+    // 		"3:277",
+    // 		"3:278",
+    // 		"3:281",
+    // 		"3:282",
+    // 		"3:285",
+    // 		"3:286",
+    // 		"3:289",
+    // 		"3:290",
+    // 		"3:291",
+    // 		"3:292",
+    // 		"3:295",
+    // 		"3:296",
+    // 		"3:299",
+    // 		"3:300",
+    // 		"3:303",
+    // 		"3:304",
+    // 		"3:305",
+    // 		"3:306",
+    // 		"3:309",
+    // 		"3:310",
+    // 		"3:313",
+    // 		"3:314",
+    // 		"3:317",
+    // 		"3:318",
+    // 		"3:321",
+    // 		"3:322",
+    // 		"3:325",
+    // 		"3:326",
+    // 		"3:329",
+    // 		"3:330",
+    // 		"3:333",
+    // 		"3:334",
+    // 		"3:337",
+    // 		"3:338",
+    // 		"3:340",
+    // 		"3:342",
+    // 		"3:348",
+    // 		"3:350",
+    // 		"3:352",
+    // 		"3:354",
+    // 		"3:360",
+    // 		"3:362",
+    // 		"3:364",
+    // 		"3:366",
+    // 		"3:372",
+    // 		"3:374",
+    // 		"3:376",
+    // 		"3:378",
+    // 		"3:384",
+    // 		"3:386",
+    // 		"3:392",
+    // 		"3:394",
+    // 		"3:400",
+    // 		"3:402",
+    // 		"3:408",
+    // 		"3:410",
+    // 		"3:412",
+    // 		"3:414",
+    // 		"3:420",
+    // 		"3:422",
+    // 		"3:428",
+    // 		"3:430",
+    // 		"3:436",
+    // 		"3:438",
+    // 		"3:440",
+    // 		"3:442",
+    // 		"3:448",
+    // 		"3:450",
+    // 		"3:456",
+    // 		"3:458",
+    // 		"3:464",
+    // 		"3:466",
+    // 		"3:468",
+    // 		"3:470",
+    // 		"3:476",
+    // 		"3:478",
+    // 		"3:484",
+    // 		"3:486",
+    // 		"3:492",
+    // 		"3:494",
+    // 		"3:500",
+    // 		"3:502",
+    // 		"3:508",
+    // 		"3:510",
+    // 		"3:516",
+    // 		"3:518",
+    // 		"3:524",
+    // 		"3:526",
+    // 		"3:532",
+    // 		"3:534",
+    // 	];
+    // 	// var styleId = node.getPluginData("styleId");
+    // 	figma.skipInvisibleInstanceChildren = true;
+    // 	// Look for node with matching styleID
+    // 	var source = figma.getNodeById(id);
+    // 	// var pages = figma.root.children;
+    // 	// var length = pages.length;
+    // 	for (let i = 0; i < nodeIds.length; i++) {
+    // 		let nodeId = nodeIds[i];
+    // 		// pages[i].findAll((node) => {
+    // 		// 	if (node.getPluginData("styleId") === id) {
+    // 		// 		nodes.push(node);
+    // 		// 	}
+    // 		// });
+    // 		let node = figma.getNodeById(nodeId);
+    // 		var layerStyle;
+    // 		if (source) {
+    // 			layerStyle = source;
+    // 			// updateLayerStyle(styleId, null, copyPasteStyle(layerStyle));
+    // 			copyPasteStyle(layerStyle, node);
+    // 		} else {
+    // 			// layerStyle = getLayerStyles(styleId).node;
+    // 			// copyPasteStyle(layerStyle, node);
+    // 			// console.log("Original node can't be found");
+    // 		}
+    // 		// nodes.push(figma.getNodeById(nodeId));
+    // 	}
+    //// This method is a lot slower!!!
+    // var instances = getInstances(nodeBeingEdited.getPluginData("styleId"))
+    // for (var i = 0; i < instances.length; i++) {
+    // 	var instanceId = instances[i]
+    // 	nodes.push(figma.getNodeById(instanceId))
+    // }
+    // }
     // For each node
     for (let i = 0; i < nodes.length; i++) {
         var node = nodes[i];
@@ -1379,6 +1529,18 @@ figma.on("selectionchange", () => {
 });
 figma.on("nodechange", (event) => __awaiter(void 0, void 0, void 0, function* () {
     if (nodeBeingEdited) {
+        // nodeBeingEdited
+        var layerStyleId = nodeBeingEdited.getPluginData("styleId");
+        // var properties = copyPasteStyle(nodeBeingEdited);
+        // _.debounce(() => {
+        // 	updateInstances(null, layerStyleId);
+        // }, 300);
+        // let update = _.throttle(() => {
+        // 	updateInstances(null, layerStyleId);
+        // }, 300);
+        // update();
+        updateInstances(null, layerStyleId);
+        // updateInstances(null, layerStyleId);
         updatePreview(nodeBeingEdited);
     }
 }));
