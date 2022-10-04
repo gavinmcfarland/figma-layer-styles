@@ -2,7 +2,7 @@ import {
 	nodeRemovedByUser,
 	centerInViewport,
 	sortNodesByPosition,
-} from "../helpers";
+} from "./helpers";
 import { copyPaste, getPageNode } from "@fignite/helpers";
 // TODO: Check and update layer style previews when UI opens
 // TODO: When editing a layer style, check that the node is a component and if it's been deleted by user
@@ -410,9 +410,11 @@ if (figma.command === "showStyles") {
 				figma.currentPage = getPageNode(node);
 				figma.currentPage.selection = [node];
 			} else {
+				// If orginal node can't be found anymore
 				node = figma.createFrame();
 				var newStyleId = node.id;
 				var properties = getLayerStyles(msg.id);
+
 				copyPasteStyle(properties.node, node);
 				centerInViewport(node);
 				node.name = `${properties.name}`;
