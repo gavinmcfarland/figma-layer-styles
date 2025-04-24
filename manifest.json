@@ -2,8 +2,8 @@
     "name": "Layer Styles",
     "id": "908303483495091267",
     "api": "1.0.0",
-    "main": "dist/code.js",
-    "ui": "dist/ui.html",
+    "main": "src/code/code.ts",
+    "ui": "src/ui/main.ts",
     "menu": [
         {
             "name": "Show Layer Styles",
@@ -11,9 +11,15 @@
         }
     ],
     "relaunchButtons": [
-        {"command": "detachLayerStyle", "name": "Detach Layer Style", "multipleSelection": true}
+        {
+            "command": "detachLayerStyle",
+            "name": "Detach Layer Style",
+            "multipleSelection": true
+        }
     ],
-    "editorType": [
-        "figma"
-    ]
+    "networkAccess": {
+        "allowedDomains": ["none"],
+        "devAllowedDomains": ["http://localhost:*", "ws://localhost:*"]
+    },
+    "editorType": ["figma"]
 }

@@ -1,16 +1,13 @@
-<script>
-    import ListItem from "./ListItem.svelte";
+<script lang="ts">
+	import ListItem from "./ListItem.svelte";
 
-    export let styles;
+	let { styles } = $props();
 </script>
 
 {#if styles}
-    <div
-        id="styles"
-        style="margin-left: -8px; margin-right: -8px; padding-bottom: 57px;"
-    >
-        {#each styles as style, i}
-            <ListItem {style} />
-        {/each}
-    </div>
+	<div id="styles">
+		{#each styles as style, i}
+			<ListItem {style} />
+		{/each}
+	</div>
 {/if}

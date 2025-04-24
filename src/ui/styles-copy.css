@@ -1,0 +1,142 @@
+input {
+	background-color: var(--figma-color-bg, white) !important;
+	color: var(--figma-color-text, black) !important;
+}
+body {
+	background-color: var(--figma-color-bg, white);
+	-ms-overflow-style: none;
+	scrollbar-width: none;
+}
+body::-webkit-scrollbar {
+	display: none;
+}
+svg {
+	fill: var(--figma-color-text, black) !important;
+}
+.type {
+	color: var(--figma-color-text, black) !important;
+}
+.bb {
+	border-bottom: 1px solid var(--figma-color-border, var(--grey));
+}
+.bt {
+	border-top: 1px solid var(--figma-color-border, var(--grey));
+}
+.place-center {
+	align-items: center;
+}
+.list-item {
+	height: 32px;
+}
+.show {
+	display: block !important;
+}
+.IconButton:hover {
+	background: var(--figma-color-bg-hover, var(--hover-fill)) !important;
+}
+
+/* Local styles */
+.action-bar {
+	position: fixed;
+	bottom: 1px;
+	border-radius: 2px;
+	left: 0;
+	width: 100%;
+	place-content: flex-end;
+	background-color: var(--figma-color-bg, white);
+}
+
+.wrapper {
+	height: calc(100% - 1px);
+}
+
+.menu {
+	display: none;
+	color: white;
+	position: absolute;
+	right: 8px;
+	z-index: 100;
+}
+
+.menu {
+	color: #fff;
+	padding: 8px 0;
+	z-index: 100;
+	background: #222222;
+	box-shadow:
+		0px 2px 7px rgba(0, 0, 0, 0.15),
+		0px 5px 17px rgba(0, 0, 0, 0.2);
+	border-radius: 2px;
+	width: 100px;
+}
+
+.menu > span {
+	line-height: 24px;
+	padding-left: 16px;
+	padding-right: 16px;
+	position: relative;
+	display: block;
+	user-select: none;
+}
+
+.menu > span:not(.divider):hover {
+	background-color: var(--blue);
+	color: white;
+}
+
+.menu > .triangle {
+	width: 12px;
+	height: 12px;
+	background-color: #222222;
+	transform: rotate(45deg);
+	position: absolute;
+	top: -3px;
+	right: 10px;
+	display: none;
+}
+
+.editName {
+	display: none;
+	position: absolute;
+	top: -8px;
+	left: 0;
+	margin-left: -8px;
+	width: 196px;
+}
+
+.list-item {
+	user-select: none;
+	display: flex;
+}
+
+.list-item > * {
+	user-select: none;
+}
+
+.list-item:hover {
+	background-color: var(--figma-color-bg-hover, #daebf7);
+}
+
+.layer-icon {
+	/* border: 1px solid #dcdcdc; */
+	/* background: #f3f3f3; */
+	/* border-radius: 999px; */
+	width: 18px;
+	height: 18px;
+	margin-right: 8px;
+}
+
+.field {
+	position: relative;
+}
+
+.blue-bg {
+	background-color: var(--figma-color-bg-hover, #daebf7);
+}
+.divider {
+	border-top: 1px solid
+		var(--figma-color-border-tertairy, rgba(255, 255, 255, 0.2));
+	display: block;
+	margin-top: 8px;
+	margin-bottom: 8px;
+}

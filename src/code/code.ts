@@ -77,7 +77,7 @@ function copyPasteStyle(source, target?) {
 
 function getInstances(styleId?) {
 	return figma.root.findAll(
-		(node) => node.getPluginData("styleId") === styleId
+		(node) => node.getPluginData("styleId") === styleId,
 	);
 }
 
@@ -277,7 +277,7 @@ function removeLayerStyle(styleId) {
 		styles.findIndex((node) => {
 			return node.id === styleId;
 		}),
-		1
+		1,
 	);
 
 	// Set layer styles again
@@ -354,130 +354,135 @@ function updatePreview(nodeBeingEdited) {
 	}
 }
 
-figma.on("selectionchange", () => {
-	checkNodeBeingEdited(figma.currentPage.selection);
-	console.log("Selection changed");
+export default function () {
+	figma.on("selectionchange", () => {
+		checkNodeBeingEdited(figma.currentPage.selection);
+		console.log("Selection changed");
 
-	if (nodeBeingEdited) {
-		setInterval(() => {
-			updatePreview(nodeBeingEdited);
-		}, 600);
-	}
-	// If user unselects then change node being edited to null
-	if (figma.currentPage.selection.length === 0) {
-		nodeBeingEdited = null;
-	}
-});
-
-if (figma.command === "showStyles") {
-	// This shows the HTML page in "ui.html".
-	figma.showUI(__html__, { width: 240, height: 360, themeColors: true });
-
-	postMessage();
-
-	// Calls to "parent.postMessage" from within the HTML page will trigger this
-	// callback. The callback will be passed the "pluginMessage" property of the
-	// posted message.
-	figma.ui.onmessage = (msg) => {
-		if (msg.type === "add-style") {
-			createStyles(figma.currentPage.selection);
-			postMessage();
+		if (nodeBeingEdited) {
+			setInterval(() => {
+				updatePreview(nodeBeingEdited);
+			}, 600);
 		}
-
-		if (msg.type === "rename-style") {
-			updateLayerStyle(msg.id, msg.name);
-			postMessage();
+		// If user unselects then change node being edited to null
+		if (figma.currentPage.selection.length === 0) {
+			nodeBeingEdited = null;
 		}
+	});
 
-		if (msg.type === "update-instances") {
-			updateInstances(figma.currentPage.selection, msg.id);
-			postMessage();
-		}
+	if (figma.command === "showStyles") {
+		// This shows the HTML page in "ui.html".
+		figma.showUI(__html__, { width: 240, height: 360, themeColors: true });
 
-		if (msg.type === "update-style") {
-			var node = figma.currentPage.selection[0];
-			var properties = copyPasteStyle(node);
-			updateLayerStyle(msg.id, null, properties, node.id);
-			figma.currentPage.selection[0].setPluginData("styleId", node.id);
-			postMessage();
-		}
+		postMessage();
 
-		if (msg.type === "edit-layer-style") {
-			var node = figma.getNodeById(msg.id);
-			if (!nodeRemovedByUser(node)) {
-				figma.viewport.scrollAndZoomIntoView([node]);
-				figma.viewport.zoom = 0.25;
-				figma.currentPage = getPageNode(node);
-				figma.currentPage.selection = [node];
-			} else {
-				// If orginal node can't be found anymore
-				node = figma.createFrame();
-				var newStyleId = node.id;
-				var properties = getLayerStyles(msg.id);
-
-				copyPasteStyle(properties.node, node);
-				centerInViewport(node);
-				node.name = `${properties.name}`;
-				figma.viewport.scrollAndZoomIntoView([node]);
-				figma.viewport.zoom = 0.25;
-				// figma.viewport.scrollAndZoomIntoView([node])
-
-				// Set as the new master layer style
-				node.setPluginData("styleId", node.id);
-
-				updateLayerStyle(msg.id, null, null, node.id);
-
-				// Update instances with new style id
-				var instances = getInstances(msg.id);
-
-				instances.map((node) => {
-					node.setPluginData("styleId", newStyleId);
-				});
-
-				figma.currentPage.selection = [node];
+		// Calls to "parent.postMessage" from within the HTML page will trigger this
+		// callback. The callback will be passed the "pluginMessage" property of the
+		// posted message.
+		figma.ui.onmessage = (msg) => {
+			if (msg.type === "add-style") {
+				createStyles(figma.currentPage.selection);
+				postMessage();
 			}
-			postMessage();
-		}
 
-		if (msg.type === "apply-style") {
-			applyLayerStyle(figma.currentPage.selection, msg.id);
-		}
+			if (msg.type === "rename-style") {
+				updateLayerStyle(msg.id, msg.name);
+				postMessage();
+			}
 
-		if (msg.type === "remove-style") {
-			removeLayerStyle(msg.id);
-			postMessage();
-		}
+			if (msg.type === "update-instances") {
+				updateInstances(figma.currentPage.selection, msg.id);
+				postMessage();
+			}
 
-		// Make sure to close the plugin when you're done. Otherwise the plugin will
-		// keep running, which shows the cancel button at the bottom of the screen.
-	};
-}
+			if (msg.type === "update-style") {
+				var node = figma.currentPage.selection[0];
+				var properties = copyPasteStyle(node);
+				updateLayerStyle(msg.id, null, properties, node.id);
+				figma.currentPage.selection[0].setPluginData(
+					"styleId",
+					node.id,
+				);
+				postMessage();
+			}
 
-if (figma.command === "createStyles") {
-	createStyles(figma.currentPage.selection);
+			if (msg.type === "edit-layer-style") {
+				var node = figma.getNodeById(msg.id);
+				if (!nodeRemovedByUser(node)) {
+					figma.viewport.scrollAndZoomIntoView([node]);
+					figma.viewport.zoom = 0.25;
+					figma.currentPage = getPageNode(node);
+					figma.currentPage.selection = [node];
+				} else {
+					// If orginal node can't be found anymore
+					node = figma.createFrame();
+					var newStyleId = node.id;
+					var properties = getLayerStyles(msg.id);
 
-	figma.closePlugin();
-}
+					copyPasteStyle(properties.node, node);
+					centerInViewport(node);
+					node.name = `${properties.name}`;
+					figma.viewport.scrollAndZoomIntoView([node]);
+					figma.viewport.zoom = 0.25;
+					// figma.viewport.scrollAndZoomIntoView([node])
 
-if (figma.command === "updateStyles") {
-	updateInstances(figma.currentPage.selection);
-	figma.closePlugin();
-}
+					// Set as the new master layer style
+					node.setPluginData("styleId", node.id);
 
-if (figma.command === "clearLayerStyles") {
-	clearLayerStyle();
-}
+					updateLayerStyle(msg.id, null, null, node.id);
 
-if (figma.command === "copyProperties") {
-	copyPasteStyle(figma.currentPage.selection[0]);
-	// figma.closePlugin()
-}
+					// Update instances with new style id
+					var instances = getInstances(msg.id);
 
-if (figma.command === "detachLayerStyle") {
-	for (var i = 0; i < figma.currentPage.selection.length; i++) {
-		var node = figma.currentPage.selection[i];
-		detachLayerStyle(node);
+					instances.map((node) => {
+						node.setPluginData("styleId", newStyleId);
+					});
+
+					figma.currentPage.selection = [node];
+				}
+				postMessage();
+			}
+
+			if (msg.type === "apply-style") {
+				applyLayerStyle(figma.currentPage.selection, msg.id);
+			}
+
+			if (msg.type === "remove-style") {
+				removeLayerStyle(msg.id);
+				postMessage();
+			}
+
+			// Make sure to close the plugin when you're done. Otherwise the plugin will
+			// keep running, which shows the cancel button at the bottom of the screen.
+		};
 	}
-	figma.notify("Layer style detached");
-	figma.closePlugin();
+
+	if (figma.command === "createStyles") {
+		createStyles(figma.currentPage.selection);
+
+		figma.closePlugin();
+	}
+
+	if (figma.command === "updateStyles") {
+		updateInstances(figma.currentPage.selection);
+		figma.closePlugin();
+	}
+
+	if (figma.command === "clearLayerStyles") {
+		clearLayerStyle();
+	}
+
+	if (figma.command === "copyProperties") {
+		copyPasteStyle(figma.currentPage.selection[0]);
+		// figma.closePlugin()
+	}
+
+	if (figma.command === "detachLayerStyle") {
+		for (var i = 0; i < figma.currentPage.selection.length; i++) {
+			var node = figma.currentPage.selection[i];
+			detachLayerStyle(node);
+		}
+		figma.notify("Layer style detached");
+		figma.closePlugin();
+	}
 }
