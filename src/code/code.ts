@@ -310,7 +310,11 @@ function detachLayerStyle(node) {
 
 function postMessage() {
 	var styles = getLayerStyles();
-	figma.ui.postMessage(styles);
+
+	figma.ui.postMessage({
+		type: "styles",
+		styles,
+	});
 }
 
 function debounce(func, wait, immediate?) {

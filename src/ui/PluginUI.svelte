@@ -17,7 +17,9 @@
 	var styles = $state([]);
 
 	async function onLoad(event) {
-		styles = event.data.pluginMessage;
+		if (event.data.pluginMessage.type === "styles") {
+			styles = event.data.pluginMessage.styles;
+		}
 	}
 </script>
 
