@@ -1,5 +1,8 @@
 <script lang="ts">
 	import { fade } from "svelte/transition";
+	import LayerIcon from "./lib/components/LayerIcon.svelte";
+	import ContextMenu from "./lib/components/ContextMenu.svelte";
+	import ContextMenuItem from "./lib/components/ContextMenuItem.svelte";
 
 	interface Props {
 		// ListItem
@@ -8,7 +11,7 @@
 
 	let { style }: Props = $props();
 	let listItem = $state();
-	let menu = $state();
+	let menu;
 
 	function PNGFromBuffer(buffer) {
 		const imgBase64 =
@@ -255,27 +258,6 @@
 		// closeMenu(event, style);
 	}
 
-	function openMenu(event, style) {
-		closeMenu();
-		event.preventDefault();
-		var rect = event.currentTarget.getBoundingClientRect();
-		event.currentTarget.classList.toggle("blue-bg");
-
-		mousePosX = event.clientX - rect.left;
-		mousePosY = event.clientY - rect.top;
-
-		if (mousePosX > 140) {
-			mousePosX = 136;
-			console.log("off screen");
-		}
-		if (rect.top > 231) {
-			mousePosY = -40;
-			console.log("off screen");
-		}
-
-		menu.classList.toggle("show");
-	}
-
 	function closeMenu() {
 		var menus = document.getElementById("styles").querySelectorAll(".menu");
 
@@ -326,7 +308,7 @@
 	});
 </script>
 
-<svelte:body onclick={onPageClick} />
+<svelte:body />
 
 <div
 	tabindex="0"
@@ -334,7 +316,7 @@
 	style="position: relative;"
 	id="listItem{style.id}"
 	bind:this={listItem}
-	oncontextmenu={openMenu(event, style)}
+	oncontextmenu={(e) => menu.openMenu(e, style)}
 	role="button"
 >
 	<div
@@ -344,8 +326,8 @@
 		style="display: flex; flex-grow: 1;"
 		onkeydown={(e) => e.key === "Enter" && applyStyle(style.id)}
 	>
-		<div class="pl-xsmall pr-xxsmall flex place-center">
-			<span class="layer-icon" style={styleCss(style)}></span>
+		<div style="display: flex; align-items: center; gap: var(--spacer-1);">
+			<LayerIcon style={styleCss(style)} />
 			<div class="field flex place-center" style="flex-grow: 1;">
 				<div
 					bind:this={field}
@@ -357,25 +339,41 @@
 						class="mb-xxsmall"
 					/>
 				</div>
-				<span style="flex-grow: 1; user-select: none;"
-					>{style.name}</span
-				>
-				<!-- <IconButton on:click={applyStyle(style.id)} iconName={IconPlus} /> -->
+				<span>{style.name}</span>
 			</div>
 		</div>
 	</div>
-	<div class="flex place-center">
-		<div
-			class="menu"
-			bind:this={menu}
-			style="left: {mousePosX}px; top: {mousePosY}px"
+
+	<ContextMenu bind:this={menu}>
+		<ContextMenuItem onClick={updateInstances(style.id)}
+			>Refresh</ContextMenuItem
 		>
-			<div class="triangle"></div>
-			<span onclick={updateInstances(style.id)}>Refresh</span>
-			<span onclick={editLayerStyle(style.id)}>Edit</span>
-			<span onclick={editStyle(event, style)}>Rename</span>
-			<span class="divider"></span>
-			<span onclick={removeStyle(style.id)}>Delete</span>
-		</div>
-	</div>
+		<ContextMenuItem onClick={editLayerStyle(style.id)}
+			>Edit</ContextMenuItem
+		>
+		<ContextMenuItem onClick={editStyle(event, style)}
+			>Rename</ContextMenuItem
+		>
+		<ContextMenuItem onClick={removeStyle(style.id)}>Delete</ContextMenuItem
+		>
+	</ContextMenu>
 </div>
+
+<style>
+	.list-item {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		font-size: var(--font-size-default);
+		padding-inline: var(--spacer-2);
+		height: 32px;
+
+		&:hover {
+			background-color: var(--figma-color-bg-hover);
+		}
+	}
+
+	.editName {
+		display: none;
+	}
+</style>

@@ -11,6 +11,9 @@ importers:
 
   .:
     dependencies:
+      '@figma-ui/mono-repo':
+        specifier: github:gavinmcfarland/figma-ui
+        version: git+https://github.com/gavinmcfarland/figma-ui.git#71e7d8089fa13563936bdfcfdd328abd54d214c1
       '@fignite/helpers':
         specifier: ^0.3.1
         version: 0.3.1
@@ -201,6 +204,10 @@ packages:
     engines: {node: '>=18'}
     cpu: [x64]
     os: [win32]
+
+  '@figma-ui/mono-repo@git+https://github.com/gavinmcfarland/figma-ui.git#71e7d8089fa13563936bdfcfdd328abd54d214c1':
+    resolution: {commit: 71e7d8089fa13563936bdfcfdd328abd54d214c1, repo: https://github.com/gavinmcfarland/figma-ui.git, type: git}
+    version: 0.0.0
 
   '@figma/plugin-typings@1.110.0':
     resolution: {integrity: sha512-n1fZKjt2zApCVqxdJs+JCdpmLX2hDvhgoGbuXeAh7xt+IkSj21gB9vhV5KW+O5sDyPnt3H7doTDO47Oy9CRkQg==}
@@ -623,6 +630,8 @@ snapshots:
 
   '@esbuild/win32-x64@0.25.3':
     optional: true
+
+  '@figma-ui/mono-repo@git+https://github.com/gavinmcfarland/figma-ui.git#71e7d8089fa13563936bdfcfdd328abd54d214c1': {}
 
   '@figma/plugin-typings@1.110.0': {}
 

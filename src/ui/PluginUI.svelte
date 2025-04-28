@@ -1,9 +1,15 @@
 <script lang="ts">
 	import { fade } from "svelte/transition";
-	import Icon from "./lib/components/Icon.svelte";
 	import Styles from "./Styles.svelte";
+	import {
+		Button,
+		Icon,
+		IconButton,
+	} from "@figma-ui/mono-repo/library/packages/svelte";
+	import "@figma-ui/mono-repo/library/packages/styles";
 
 	function addStyle() {
+		console.log("addStyle");
 		parent.postMessage(
 			{
 				pluginMessage: {
@@ -28,8 +34,27 @@
 <div class="">
 	<Styles {styles} />
 
-	<div class="action-bar flex p-xxsmall bt">
-		<Icon svg="plus" />
-		<button onclick={addStyle}>Add style</button>
+	<div class="action-bar">
+		<div class="spacer"></div>
+		<IconButton icon="plus" onClick={addStyle} />
 	</div>
 </div>
+
+<style>
+	.action-bar {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: var(--spacer-1);
+		border-top: 1px solid var(--figma-color-border);
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		z-index: 1000;
+	}
+
+	.spacer {
+		flex-grow: 1;
+	}
+</style>
