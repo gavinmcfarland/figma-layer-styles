@@ -35,7 +35,7 @@
 	</div>
 </div>
 
-<style>
+<style lang="ts">
 	.action-bar {
 		display: flex;
 		align-items: center;

@@ -3,7 +3,7 @@
 	import { contextMenus } from '../stores'
 	import { clickOutside } from '../clickOutside'
 	import { onWindowBlur } from '../onWindowBlur'
-	let { children, id } = $props()
+	let { children, id }: { children: any; id?: string } = $props()
 	let menu = $state<HTMLElement>()
 
 	let mousePosX = $state(0)
@@ -77,7 +77,7 @@
 	{@render children?.()}
 </div>
 
-<style>
+<style lang="ts">
 	.context-menu {
 		display: none;
 		color: #fff;

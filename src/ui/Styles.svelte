@@ -1,7 +1,7 @@
 <script lang="ts">
-	import ListItem from "./ListItem.svelte";
+	import ListItem from './lib/components/ListItem.svelte'
 
-	let { styles } = $props();
+	let { styles } = $props()
 </script>
 
 {#if styles}
