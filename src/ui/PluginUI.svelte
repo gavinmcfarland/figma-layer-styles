@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { fade } from "svelte/transition";
-
+	import Icon from "./lib/components/Icon.svelte";
 	import Styles from "./Styles.svelte";
 
 	function addStyle() {
@@ -29,6 +29,7 @@
 	<Styles {styles} />
 
 	<div class="action-bar flex p-xxsmall bt">
+		<Icon svg="plus" />
 		<button onclick={addStyle}>Add style</button>
 	</div>
 </div>
