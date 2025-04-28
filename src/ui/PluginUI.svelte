@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition'
 	import Styles from './Styles.svelte'
-	import { Button, Icon, IconButton } from '@figma-ui/mono-repo/library/packages/svelte'
+	import { IconButton } from '@figma-ui/mono-repo/library/packages/svelte'
 	import '@figma-ui/mono-repo/library/packages/styles'
 
 	function addStyle() {
@@ -17,7 +17,7 @@
 
 	var styles = $state([])
 
-	async function onLoad(event) {
+	async function onLoad(event: MessageEvent) {
 		if (event.data.pluginMessage.type === 'styles') {
 			styles = event.data.pluginMessage.styles
 		}
@@ -46,7 +46,7 @@
 		bottom: 0;
 		left: 0;
 		right: 0;
-		z-index: 1000;
+		z-index: 50;
 	}
 
 	.spacer {

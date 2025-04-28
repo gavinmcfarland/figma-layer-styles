@@ -4,7 +4,7 @@
 	import { clickOutside } from '../clickOutside'
 	import { onWindowBlur } from '../onWindowBlur'
 	let { children, id } = $props()
-	let menu = $state()
+	let menu = $state<HTMLElement>()
 
 	let mousePosX = $state(0)
 	let mousePosY = $state(0)
@@ -16,7 +16,7 @@
 		}
 
 		contextMenus.update((state) => {
-			if (!state.some((menu) => menu.id === id)) {
+			if (!state.some((menu: { id: string }) => menu.id === id)) {
 				// Add new button state
 				return [...state, { id }]
 			}
@@ -29,7 +29,7 @@
 	}
 
 	export function closeAllMenus() {
-		$contextMenus.forEach((menuState) => {
+		$contextMenus.forEach((menuState: { id: string }) => {
 			const menuElement = document.getElementById(menuState.id)
 			if (menuElement) {
 				menuElement.classList.remove('show')
@@ -37,11 +37,12 @@
 		})
 	}
 
-	export function openMenu(event, style) {
+	export function openMenu(event: MouseEvent, style: string) {
 		closeAllMenus() // Close all menus first
 		event.preventDefault()
-		let rect = event.currentTarget.getBoundingClientRect()
-		event.currentTarget.classList.toggle('blue-bg')
+		const target = event.currentTarget as HTMLElement
+		let rect = target.getBoundingClientRect()
+		target.classList.toggle('selected')
 
 		mousePosX = event.clientX - rect.left
 		mousePosY = event.clientY - rect.top
@@ -55,18 +56,18 @@
 			console.log('off screen')
 		}
 
-		menu.classList.toggle('show')
+		menu?.classList.toggle('show')
 	}
 
 	onMount(() => {
-		clickOutside(menu, () => {
-			closeMenu()
-		})
+		if (menu) {
+			clickOutside(menu, () => {
+				closeMenu()
+			})
+		}
 		onWindowBlur(() => {
-			// Your custom blur handling logic here
 			closeAllMenus()
 			// hideInput()
-			// if (listItem) listItem.classList.remove('blue-bg')
 		})
 	})
 </script>
@@ -89,6 +90,11 @@
 		border-radius: 2px;
 		width: 100px;
 		position: absolute;
+		z-index: 100;
+	}
+
+	:global(.list-item.selected, .list-item.list-item.selected:hover) {
+		background: var(--figma-color-bg-selected);
 	}
 
 	:global(.context-menu.show) {
