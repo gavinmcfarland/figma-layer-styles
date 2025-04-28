@@ -300,12 +300,6 @@
 		closeMenu();
 		if (listItem) listItem.classList.remove("blue-bg");
 	}
-
-	window.addEventListener("blur", () => {
-		hideInput();
-		closeMenu();
-		if (listItem) listItem.classList.remove("blue-bg");
-	});
 </script>
 
 <svelte:body />

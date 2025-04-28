@@ -1,30 +1,25 @@
 <script lang="ts">
-	import { fade } from "svelte/transition";
-	import Styles from "./Styles.svelte";
-	import {
-		Button,
-		Icon,
-		IconButton,
-	} from "@figma-ui/mono-repo/library/packages/svelte";
-	import "@figma-ui/mono-repo/library/packages/styles";
+	import { fade } from 'svelte/transition'
+	import Styles from './Styles.svelte'
+	import { Button, Icon, IconButton } from '@figma-ui/mono-repo/library/packages/svelte'
+	import '@figma-ui/mono-repo/library/packages/styles'
 
 	function addStyle() {
-		console.log("addStyle");
 		parent.postMessage(
 			{
 				pluginMessage: {
-					type: "add-style",
+					type: 'add-style',
 				},
 			},
-			"*",
-		);
+			'*',
+		)
 	}
 
-	var styles = $state([]);
+	var styles = $state([])
 
 	async function onLoad(event) {
-		if (event.data.pluginMessage.type === "styles") {
-			styles = event.data.pluginMessage.styles;
+		if (event.data.pluginMessage.type === 'styles') {
+			styles = event.data.pluginMessage.styles
 		}
 	}
 </script>
