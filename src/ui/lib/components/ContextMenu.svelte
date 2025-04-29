@@ -3,12 +3,11 @@
 	import { contextMenus } from '../stores'
 	import { clickOutside } from '../clickOutside'
 	import { onWindowBlur } from '../onWindowBlur'
-	let { children, id }: { children: any; id?: string } = $props()
+	let { children, id, target }: { children: any; id?: string; target?: HTMLElement } = $props()
 	let menu = $state<HTMLElement>()
 
 	let mousePosX = $state(0)
 	let mousePosY = $state(0)
-	let target = $state<HTMLElement>()
 
 	onMount(() => {
 		// Generate a random ID if none is provided
@@ -25,7 +24,8 @@
 		})
 	})
 
-	export function closeMenu() {
+	export function closeMenu(menu: HTMLElement) {
+		console.log('closeMenu', target)
 		menu?.classList.remove('show')
 		target?.classList.remove('selected')
 	}
@@ -34,7 +34,7 @@
 		$contextMenus.forEach((menuState: { id: string }) => {
 			const menuElement = document.getElementById(menuState.id)
 			if (menuElement) {
-				closeMenu()
+				closeMenu(menuElement)
 			}
 		})
 	}
@@ -49,13 +49,12 @@
 		mousePosX = event.clientX - rect.left
 		mousePosY = event.clientY - rect.top
 
+		// Off screen
 		if (mousePosX > 140) {
 			mousePosX = 136
-			console.log('off screen')
 		}
 		if (rect.top > 231) {
 			mousePosY = -40
-			console.log('off screen')
 		}
 
 		menu?.classList.toggle('show')
@@ -64,18 +63,16 @@
 	onMount(() => {
 		if (menu) {
 			clickOutside(menu, () => {
-				closeMenu()
+				closeMenu(menu!)
 			})
 		}
 		onWindowBlur(() => {
 			closeAllMenus()
-			// hideInput()
 		})
 	})
 </script>
 
 <div class="context-menu" bind:this={menu} {id} style="left: {mousePosX}px; top: {mousePosY}px">
-	<div class="triangle"></div>
 	{@render children?.()}
 </div>
 
