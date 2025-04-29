@@ -10,26 +10,10 @@ function clearPage() {
 test('create style', async ({ ui, main }) => {
 	await ui.goto('http://localhost:4000/')
 
-	const rect = await main(() => {
-		console.log('Creating rectangle')
-		let rect = figma.createRectangle()
-		// rect.name = 'Test Rectangle'
-		// rect.fills = [
-		// 	{
-		// 		type: 'SOLID',
-		// 		color: { r: 1, g: 0, b: 0 },
-		// 	},
-		// ]
-		// rect.x = 100
-		// rect.y = 100
-		// rect.cornerRadius = 10
-
-		// figma.currentPage.selection = [rect]
-
-		return rect
+	await main(() => {
+		let pageChildren = figma.currentPage.children
+		figma.currentPage.selection = [pageChildren[0]]
 	})
-
-	console.log('Rectangle created', rect)
 
 	await ui.locator('#listItem0').click()
 
