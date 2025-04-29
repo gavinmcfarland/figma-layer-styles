@@ -8,6 +8,7 @@
 
 	let mousePosX = $state(0)
 	let mousePosY = $state(0)
+	let target = $state<HTMLElement>()
 
 	onMount(() => {
 		// Generate a random ID if none is provided
@@ -26,13 +27,14 @@
 
 	export function closeMenu() {
 		menu?.classList.remove('show')
+		target?.classList.remove('selected')
 	}
 
 	export function closeAllMenus() {
 		$contextMenus.forEach((menuState: { id: string }) => {
 			const menuElement = document.getElementById(menuState.id)
 			if (menuElement) {
-				menuElement.classList.remove('show')
+				closeMenu()
 			}
 		})
 	}
@@ -40,7 +42,7 @@
 	export function openMenu(event: MouseEvent, style: string) {
 		closeAllMenus() // Close all menus first
 		event.preventDefault()
-		const target = event.currentTarget as HTMLElement
+		target = event.currentTarget as HTMLElement
 		let rect = target.getBoundingClientRect()
 		target.classList.toggle('selected')
 

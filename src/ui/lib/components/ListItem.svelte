@@ -1,9 +1,11 @@
 <script lang="ts">
-	import { fade } from 'svelte/transition'
 	import LayerIcon from './LayerIcon.svelte'
 	import ContextMenu from './ContextMenu.svelte'
 	import ContextMenuItem from './ContextMenuItem.svelte'
-
+	import Input from './Input.svelte'
+	import { tick } from 'svelte'
+	import { onWindowBlur } from '../onWindowBlur'
+	import { clickOutside } from '../clickOutside'
 	interface Props {
 		// ListItem
 		style: any
@@ -12,6 +14,7 @@
 	let { style }: Props = $props()
 	let listItem: HTMLElement
 	let menu: ContextMenu
+	let inputComponent = $state<Input>()
 
 	function PNGFromBuffer(buffer: ArrayBuffer) {
 		const imgBase64 =
@@ -130,8 +133,7 @@
 		return string
 	}
 
-	let field: HTMLElement
-
+	let showField = $state(false)
 	let styleBeingEdited = $state({
 		name: '',
 	})
@@ -170,6 +172,7 @@
 			},
 			'*',
 		)
+		menu.closeMenu()
 	}
 
 	function editLayerStyle(id: string) {
@@ -182,6 +185,7 @@
 			},
 			'*',
 		)
+		menu.closeMenu()
 	}
 
 	function removeStyle(id: string) {
@@ -194,9 +198,11 @@
 			},
 			'*',
 		)
+		menu.closeMenu()
 	}
 
 	function renameStyle(id: string, name: string) {
+		console.log('renameStyle', id, name)
 		parent.postMessage(
 			{
 				pluginMessage: {
@@ -207,41 +213,27 @@
 			},
 			'*',
 		)
+		menu.closeMenu()
 	}
 
-	function editStyle(event: MouseEvent, style: { id: string; name: string }) {
-		styleBeingEdited = style
-
-		var editName = listItem.querySelector('.editName')
-		var input = listItem.querySelector('input')
-		editName?.classList.add('show')
+	async function editStyle(event: MouseEvent, style: { id: string; name: string }) {
+		menu.closeMenu()
+		showField = true
 		listItem.classList.add('blue-bg')
 
-		input?.focus()
-		// input.addEventListener("focus", () => {
-		//     input.select();
-		// });
-		// input.focus();
-		// input.select();
+		await tick()
+		let input = inputComponent?.getInputRef()
 
-		// input?.addEventListener('keyup', function (event) {
-		// 	// Number 13 is the "Enter" key on the keyboard
-		// 	if (event.keyCode === 13) {
-		// 		// Cancel the default action, if needed
-		// 		event.preventDefault()
+		if (input) {
+			input.focus()
+			clickOutside(input, () => {
+				showField = false
+			})
+		}
 
-		// 		renameStyle(styleBeingEdited.id, styleBeingEdited.name)
-		// 		document.activeElement?.blur()
-		// 		hideInput()
-		// 		// Trigger the button element with a click
-		// 		// document.getElementById("myBtn").click();
-		// 	}
-		// })
-	}
-
-	function hideInput() {
-		if (listItem) field.classList.remove('show')
-		// if (listItem) renameStyle(styleBeingEdited.id, styleBeingEdited.name);
+		onWindowBlur(() => {
+			showField = false
+		})
 	}
 </script>
 
@@ -263,13 +255,28 @@
 		style="display: flex; flex-grow: 1;"
 		onkeydown={(e) => e.key === 'Enter' && applyStyle(style.id)}
 	>
-		<div style="display: flex; align-items: center; gap: var(--spacer-1);">
+		<div style="display: flex; align-items: center; gap: var(--spacer-2);">
 			<LayerIcon style={styleCss(style)} />
-			<div class="field flex place-center" style="flex-grow: 1;">
-				<div bind:this={field} class="editName" transition:fade={{ duration: 100 }}>
-					<input bind:value={styleBeingEdited.name} class="mb-xxsmall" />
-				</div>
-				<span>{style.name}</span>
+			<div class="field" style="flex-grow: 1;">
+				{#if showField}
+					<Input
+						style="margin-left: -8px"
+						bind:this={inputComponent}
+						id="editNameField"
+						bind:value={style.name}
+						onkeydown={(e: KeyboardEvent) => {
+							if (e.key === 'Enter') {
+								e.stopPropagation()
+								showField = false
+							}
+						}}
+						oninput={() => {
+							renameStyle(style.id, style.name)
+						}}
+					/>
+				{:else}
+					<span>{style.name}</span>
+				{/if}
 			</div>
 		</div>
 	</div>
@@ -278,6 +285,7 @@
 		<ContextMenuItem onClick={updateInstances(style.id)}>Refresh</ContextMenuItem>
 		<ContextMenuItem onClick={() => editLayerStyle(style.id)}>Edit</ContextMenuItem>
 		<ContextMenuItem onClick={(e: MouseEvent) => editStyle(e, style)}>Rename</ContextMenuItem>
+		<div class="divider"></div>
 		<ContextMenuItem onClick={() => removeStyle(style.id)}>Delete</ContextMenuItem>
 	</ContextMenu>
 </div>
@@ -288,7 +296,7 @@
 		align-items: center;
 		justify-content: space-between;
 		font-size: var(--font-size-default);
-		padding-inline: var(--spacer-2);
+		padding-inline: var(--spacer-3);
 		height: 32px;
 
 		&:hover {
@@ -296,7 +304,10 @@
 		}
 	}
 
-	.editName {
-		display: none;
+	.divider {
+		border-top: 1px solid rgba(255, 255, 255, 0.2);
+		display: block;
+		margin-top: 8px;
+		margin-bottom: 8px;
 	}
 </style>
