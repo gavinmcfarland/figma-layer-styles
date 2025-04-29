@@ -3,11 +3,12 @@
 	import { contextMenus } from '../stores'
 	import { clickOutside } from '../clickOutside'
 	import { onWindowBlur } from '../onWindowBlur'
-	let { children, id, target }: { children: any; id?: string; target?: HTMLElement } = $props()
+	let { children, id }: { children: any; id?: string } = $props()
 	let menu = $state<HTMLElement>()
 
 	let mousePosX = $state(0)
 	let mousePosY = $state(0)
+	let lastTarget = $state<HTMLElement>()
 
 	onMount(() => {
 		// Generate a random ID if none is provided
@@ -25,9 +26,9 @@
 	})
 
 	export function closeMenu(menu: HTMLElement) {
-		console.log('closeMenu', target)
+		console.log('closeMenu', lastTarget)
 		menu?.classList.remove('show')
-		target?.classList.remove('selected')
+		lastTarget?.classList.remove('selected')
 	}
 
 	export function closeAllMenus() {
@@ -40,9 +41,11 @@
 	}
 
 	export function openMenu(event: MouseEvent, style: string) {
+		let target = event.currentTarget as HTMLElement
 		closeAllMenus() // Close all menus first
+		lastTarget = target
 		event.preventDefault()
-		target = event.currentTarget as HTMLElement
+
 		let rect = target.getBoundingClientRect()
 		target.classList.toggle('selected')
 
