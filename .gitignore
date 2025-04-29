@@ -4,3 +4,4 @@ public/index.html
 src/build
 .DS_Store
 dist/
+test-results/
