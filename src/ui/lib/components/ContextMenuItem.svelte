@@ -1,5 +1,5 @@
 <script>
-	let { onClick, children } = $props();
+	let { onClick, children } = $props()
 </script>
 
 <span class="context-menu-item" onclick={onClick}>{@render children?.()}</span>
@@ -7,7 +7,7 @@
 <style>
 	.context-menu-item {
 		line-height: 24px;
-		padding-left: var(--spacer-2);
+		padding-left: var(--spacer-3);
 		padding-right: var(--spacer-2);
 		position: relative;
 		display: block;
