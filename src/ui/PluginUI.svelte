@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { fade } from 'svelte/transition'
+	import { onMount } from 'svelte'
 	import Styles from './Styles.svelte'
 	import { IconButton } from '@figma-ui/mono-repo/library/packages/svelte'
 	import '@figma-ui/mono-repo/library/packages/styles'
@@ -16,19 +17,42 @@
 	}
 
 	var styles = $state([])
-
+	var currentSelection = $state([])
 	async function onLoad(event: MessageEvent) {
-		if (event.data.pluginMessage.type === 'styles') {
+		if (event.data.pluginMessage.type === 'STYLE_LIST') {
 			styles = event.data.pluginMessage.styles
 		}
+
+		if (event.data.pluginMessage.type === 'CURRENT_SELECTION') {
+			currentSelection = event.data.pluginMessage.selection
+		}
 	}
+
+	parent.postMessage(
+		{
+			pluginMessage: { type: 'UI_READY' },
+		},
+		'*',
+	)
+
+	onMount(() => {
+		window.onmessage = (event) => {
+			if (event.data.pluginMessage.type === 'STYLE_LIST') {
+				styles = event.data.pluginMessage.styles
+			}
+
+			if (event.data.pluginMessage.type === 'CURRENT_SELECTION') {
+				currentSelection = event.data.pluginMessage.selection
+			}
+		}
+	})
 </script>
 
-<svelte:window onmessage={onLoad} />
+<!-- <svelte:window onmessage={onLoad} /> -->
 
 <div class="">
 	<div class="styles">
-		<Styles {styles} />
+		<Styles {styles} {currentSelection} />
 	</div>
 
 	<div class="action-bar">

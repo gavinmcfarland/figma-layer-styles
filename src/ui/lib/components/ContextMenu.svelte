@@ -25,10 +25,13 @@
 		})
 	})
 
-	export function closeMenu(menu: HTMLElement) {
-		console.log('closeMenu', lastTarget)
-		menu?.classList.remove('show')
-		lastTarget?.classList.remove('selected')
+	export function closeMenu(element: HTMLElement) {
+		if (!element) {
+			menu?.classList.remove('show')
+		} else {
+			element?.classList.remove('show')
+			lastTarget?.classList.remove('selected')
+		}
 	}
 
 	export function closeAllMenus() {

@@ -7,11 +7,12 @@
 	import { onWindowBlur } from '../onWindowBlur'
 	import { clickOutside } from '../clickOutside'
 	interface Props {
-		// ListItem
 		style: any
+		currentSelection?: any
+		key?: number
 	}
 
-	let { style }: Props = $props()
+	let { style, currentSelection, key }: Props = $props()
 	let listItem: HTMLElement
 	let menu: ContextMenu
 	let inputComponent = $state<Input>()
@@ -235,6 +236,14 @@
 			showField = false
 		})
 	}
+
+	$effect(() => {
+		if (currentSelection.styleId === style.id) {
+			listItem.classList.add('selected')
+		} else {
+			listItem.classList.remove('selected')
+		}
+	})
 </script>
 
 <svelte:body />
@@ -243,7 +252,8 @@
 	tabindex="0"
 	class="list-item"
 	style="position: relative;"
-	id="listItem{style.id}"
+	id="listItem{key}"
+	data-style-id={style.id}
 	bind:this={listItem}
 	oncontextmenu={(e) => menu.openMenu(e, style)}
 	role="button"
@@ -283,7 +293,7 @@
 
 	<ContextMenu bind:this={menu}>
 		<ContextMenuItem onClick={updateInstances(style.id)}>Refresh</ContextMenuItem>
-		<ContextMenuItem onClick={() => editLayerStyle(style.id)}>Edit</ContextMenuItem>
+		<ContextMenuItem onClick={() => editLayerStyle(style.id)}>Edit style</ContextMenuItem>
 		<ContextMenuItem onClick={(e: MouseEvent) => editStyle(e, style)}>Rename</ContextMenuItem>
 		<div class="divider"></div>
 		<ContextMenuItem onClick={() => removeStyle(style.id)}>Delete</ContextMenuItem>
