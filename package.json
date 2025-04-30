@@ -7,7 +7,8 @@
 		"build": "plugma build",
 		"preview": "plugma preview",
 		"release": "plugma release",
-		"test:e2e": "npx playwright test"
+		"test:e2e": "npx playwright test",
+		"test": "npx vitest"
 	},
 	"devDependencies": {
 		"@figma/plugin-typings": "^1.110.0",
@@ -23,9 +24,10 @@
 	"dependencies": {
 		"@figma-ui/mono-repo": "github:gavinmcfarland/figma-ui",
 		"@fignite/helpers": "^0.3.1",
-		"@playwright/test": "^1.52.0",
+		"@playwright/test": "1.51.1",
 		"@tsconfig/svelte": "^5.0.4",
 		"base64-arraybuffer": "^1.0.2",
-		"plugma": "^2.0.0-21"
+		"plugma": "file:/Users/gavinmcfarland/Developer/repos/plugma/packages/plugma",
+		"vitest": "^3.1.2"
 	}
 }

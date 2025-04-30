@@ -388,7 +388,6 @@ export default function () {
 		// posted message.
 		figma.ui.onmessage = (msg) => {
 			if (msg.type === 'UI_READY') {
-				console.log('UI_READY')
 				postStyleList()
 			}
 

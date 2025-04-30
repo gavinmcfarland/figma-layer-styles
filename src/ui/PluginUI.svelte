@@ -74,6 +74,7 @@
 		right: 0;
 		z-index: 50;
 		height: 40px;
+		background-color: var(--figma-color-bg);
 	}
 
 	.styles {
