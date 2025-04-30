@@ -8,6 +8,8 @@ async function createNode(main: any) {
 			b: Math.random(),
 		}
 
+		const BORDER_RADIUS = Math.random() * 30
+
 		// Randomly select a node type
 		const nodeTypes = ['RECTANGLE', 'FRAME', 'COMPONENT'] as const
 		const randomType = nodeTypes[Math.floor(Math.random() * nodeTypes.length)]
@@ -33,7 +35,7 @@ async function createNode(main: any) {
 						color: TEST_COLOR,
 					},
 				]
-				node.cornerRadius = 10
+				node.cornerRadius = BORDER_RADIUS
 				break
 
 			case 'FRAME':
@@ -45,6 +47,7 @@ async function createNode(main: any) {
 						color: TEST_COLOR,
 					},
 				]
+				node.cornerRadius = BORDER_RADIUS
 				break
 
 			case 'TEXT':
@@ -68,6 +71,7 @@ async function createNode(main: any) {
 						color: TEST_COLOR,
 					},
 				]
+				node.cornerRadius = BORDER_RADIUS
 				break
 		}
 
@@ -80,6 +84,13 @@ async function createNode(main: any) {
 		return node
 	})
 }
+
+// NOTE: Need to wait until Plugma injects Playwrighttests
+// test('clear styles', async ({ ui, main }) => {
+// 	await main(async () => {
+// 		await clearLayerStyle()
+// 	})
+// })
 
 test('create style', async ({ ui, main }) => {
 	await ui.goto('http://localhost:4000/')

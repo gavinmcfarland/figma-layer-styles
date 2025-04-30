@@ -195,7 +195,7 @@ function updateInstances(selection, id?) {
 	// figma.closePlugin()
 }
 
-function clearLayerStyle() {
+export function clearLayerStyle() {
 	figma.root.setPluginData('styles', '')
 	console.log('Styles cleared')
 	figma.closePlugin()
@@ -258,7 +258,7 @@ function applyLayerStyle(selection, styleId) {
 	}
 }
 
-function removeLayerStyle(styleId) {
+export function removeLayerStyle(styleId) {
 	var styles = getLayerStyles()
 
 	// Remove layer style with matching node
