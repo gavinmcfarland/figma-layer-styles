@@ -2,7 +2,7 @@
 	import { fade } from 'svelte/transition'
 	import { onMount } from 'svelte'
 	import Styles from './Styles.svelte'
-	import { IconButton } from '@figma-ui/mono-repo/library/packages/svelte'
+	import { IconButton, Button } from '@figma-ui/mono-repo/library/packages/svelte'
 	import '@figma-ui/mono-repo/library/packages/styles'
 
 	function addStyle() {
@@ -18,15 +18,6 @@
 
 	var styles = $state([])
 	var currentSelection = $state([])
-	async function onLoad(event: MessageEvent) {
-		if (event.data.pluginMessage.type === 'STYLE_LIST') {
-			styles = event.data.pluginMessage.styles
-		}
-
-		if (event.data.pluginMessage.type === 'CURRENT_SELECTION') {
-			currentSelection = event.data.pluginMessage.selection
-		}
-	}
 
 	parent.postMessage(
 		{
@@ -51,9 +42,15 @@
 <!-- <svelte:window onmessage={onLoad} /> -->
 
 <div class="">
-	<div class="styles">
-		<Styles {styles} {currentSelection} />
-	</div>
+	{#if styles.length > 0}
+		<div class="styles">
+			<Styles {styles} {currentSelection} />
+		</div>
+	{:else}
+		<div class="no-styles">
+			<p class="text">Select a layer<br /> to create a style from</p>
+		</div>
+	{/if}
 
 	<div class="action-bar">
 		<div class="spacer"></div>
@@ -78,10 +75,30 @@
 	}
 
 	.styles {
-		padding-block: var(--spacer-2);
+		padding-top: var(--spacer-2);
+		padding-bottom: 40px;
+	}
+
+	.no-styles {
+		padding-top: var(--spacer-2);
+		padding-bottom: 40px;
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		justify-content: center;
+		height: 100%;
+		gap: var(--spacer-2);
 	}
 
 	.spacer {
 		flex-grow: 1;
+	}
+
+	.text {
+		font-size: 11px;
+		color: var(--figma-color-text-secondary);
+		letter-spacing: var(--letter-spacing-default);
+		text-align: center;
+		line-height: var(--line-height-default);
 	}
 </style>

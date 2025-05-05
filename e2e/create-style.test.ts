@@ -50,17 +50,17 @@ async function createNode(main: any) {
 				node.cornerRadius = BORDER_RADIUS
 				break
 
-			case 'TEXT':
-				node = figma.createText()
-				node.name = 'Test Text'
-				node.characters = 'Hello World'
-				node.fills = [
-					{
-						type: 'SOLID',
-						color: TEST_COLOR,
-					},
-				]
-				break
+			// case 'TEXT':
+			// 	node = figma.createText()
+			// 	node.name = 'Test Text'
+			// 	node.characters = 'Hello World'
+			// 	node.fills = [
+			// 		{
+			// 			type: 'SOLID',
+			// 			color: TEST_COLOR,
+			// 		},
+			// 	]
+			// 	break
 
 			case 'COMPONENT':
 				node = figma.createComponent()
@@ -84,13 +84,6 @@ async function createNode(main: any) {
 		return node
 	})
 }
-
-// NOTE: Need to wait until Plugma injects Playwrighttests
-// test('clear styles', async ({ ui, main }) => {
-// 	await main(async () => {
-// 		await clearLayerStyle()
-// 	})
-// })
 
 test('create style', async ({ ui, main }) => {
 	await ui.goto('http://localhost:4000/')

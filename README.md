@@ -1,25 +1,59 @@
 # Layer Styles
 
-This plugin lets you copy, paste and link layer styles.
+## Quickstart
 
-## Development
+This plugin was created with [Plugma](https://github.com/gavinmcfarland/plugma) using the [Svelte](https://svelte.dev/) framework.
 
-During development, watch your project for changes with the following command.
+### Requirements
+
+- [Node.js](https://nodejs.org/en)
+- [Figma desktop app](https://www.figma.com/downloads/)
+
+### Install and Import
+
+1. Install the dependencies and watch for changes while developing:
+
+    ```bash
+    pnpm install
+    pnpm dev
+    ```
+
+2. Open the Figma desktop app and import the plugin:
+
+    - Open a file in Figma.
+    - Search for "Import plugin from manifest..." using the [Quick Actions](https://help.figma.com/hc/en-us/articles/360040328653-Use-shortcuts-and-quick-actions#Use_quick_actions) bar.
+    - Choose the `manifest.json` file from the `dist` folder.
+
+3. Manage `manifest` details from inside `package.json`.
+
+### Browser Preview
+
+Run this command to preview your plugin in the browser during development.
 
 ```bash
-npm run dev
+pnpm preview
 ```
 
-Start building your plugin UI in `'src/Plugin.svelte'`.
+_Make sure the plugin is open in the Figma desktop app._
 
-## Build
+### Testing
 
-When ready to package up your final Figma Plugin:
+Test the plugin by running the following command.
 
 ```bash
-npm run build
+npx playwright test --ui
 ```
 
-## Bugs
+### Before Publishing
 
-For some reason test event listeners are not being added during dev build.
+Before publishing your plugin, make sure to create a build. If not, it will still point to the dev server and won't work properly for users.
+
+```bash
+pnpm run build
+```
+
+Now you can publish the plugin from the Figma desktop app.
+
+### Advanced
+
+See the [Plugma docs](https://plugma.dev/docs) for further information.
