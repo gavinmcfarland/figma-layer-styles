@@ -6,15 +6,15 @@
 	import { tick } from 'svelte'
 	import { onWindowBlur } from '../onWindowBlur'
 	import { clickOutside } from '../clickOutside'
+	import { selectedStyles } from '../stores'
 	interface Props {
 		style: any
 		styles: any[]
 		currentSelection?: any
-		selectedStyles?: string[]
 		key?: number
 	}
 
-	let { style, styles, currentSelection, selectedStyles = $bindable(), key }: Props = $props()
+	let { style, styles, currentSelection, key }: Props = $props()
 	let listItem: HTMLElement
 	let menu: ContextMenu
 	let inputComponent = $state<Input>()
@@ -296,101 +296,111 @@
 		}
 
 		// Normal click: clear selection and apply this style
-		if (selectedStyles && selectedStyles.length > 0) {
-			selectedStyles = []
-		}
+		selectedStyles.update((currentStyles) => {
+			if (currentStyles && currentStyles.length > 0) {
+				return []
+			}
+			return currentStyles
+		})
 
 		applyStyle(style.id)
 	}
 
 	function toggleSelection(event: MouseEvent) {
 		event.stopPropagation()
-		if (!selectedStyles) {
-			selectedStyles = []
-		}
+		selectedStyles.update((currentStyles) => {
+			if (!currentStyles) {
+				return [style.id]
+			}
 
-		const index = selectedStyles.indexOf(style.id)
-		if (index > -1) {
-			selectedStyles.splice(index, 1)
-		} else {
-			selectedStyles.push(style.id)
-		}
+			const index = currentStyles.indexOf(style.id)
+			if (index > -1) {
+				return currentStyles.filter((id) => id !== style.id)
+			} else {
+				return [...currentStyles, style.id]
+			}
+		})
 	}
 
 	function selectRange(event: MouseEvent) {
 		event.stopPropagation()
-		if (!selectedStyles) {
-			selectedStyles = []
-		}
-
-		// Get all style IDs from the parent component
-		const allStyleIds = styles.map((s: any) => s.id)
-		const currentIndex = allStyleIds.indexOf(style.id)
-
-		// Find the last selected item to determine range
-		let lastSelectedIndex = -1
-		for (let i = 0; i < allStyleIds.length; i++) {
-			if (selectedStyles.includes(allStyleIds[i])) {
-				lastSelectedIndex = i
+		selectedStyles.update((currentStyles) => {
+			if (!currentStyles) {
+				return [style.id]
 			}
-		}
 
-		if (lastSelectedIndex === -1) {
-			// If no previous selection, just select this item
-			selectedStyles = [style.id]
-		} else {
-			// Select range from last selected to current
-			const start = Math.min(lastSelectedIndex, currentIndex)
-			const end = Math.max(lastSelectedIndex, currentIndex)
+			// Get all style IDs from the parent component
+			const allStyleIds = styles.map((s: any) => s.id)
+			const currentIndex = allStyleIds.indexOf(style.id)
 
-			// Add all items in range to selection
-			for (let i = start; i <= end; i++) {
-				const styleId = allStyleIds[i]
-				if (!selectedStyles.includes(styleId)) {
-					selectedStyles.push(styleId)
+			// Find the last selected item to determine range
+			let lastSelectedIndex = -1
+			for (let i = 0; i < allStyleIds.length; i++) {
+				if (currentStyles.includes(allStyleIds[i])) {
+					lastSelectedIndex = i
 				}
 			}
 
-			// Force reactivity by reassigning the array
-			selectedStyles = selectedStyles
-		}
+			if (lastSelectedIndex === -1) {
+				// If no previous selection, just select this item
+				return [style.id]
+			} else {
+				// Select range from last selected to current
+				const start = Math.min(lastSelectedIndex, currentIndex)
+				const end = Math.max(lastSelectedIndex, currentIndex)
+
+				// Add all items in range to selection
+				const newSelection = [...currentStyles]
+				for (let i = start; i <= end; i++) {
+					const styleId = allStyleIds[i]
+					if (!newSelection.includes(styleId)) {
+						newSelection.push(styleId)
+					}
+				}
+				return newSelection
+			}
+		})
 	}
 
 	function deleteSelectedStyles(event: MouseEvent) {
 		event.stopPropagation()
-		if (selectedStyles && selectedStyles.length > 0) {
-			selectedStyles.forEach((styleId) => {
-				parent.postMessage(
-					{
-						pluginMessage: {
-							type: 'remove-style',
-							id: styleId,
+		selectedStyles.update((currentStyles) => {
+			if (currentStyles && currentStyles.length > 0) {
+				currentStyles.forEach((styleId) => {
+					parent.postMessage(
+						{
+							pluginMessage: {
+								type: 'remove-style',
+								id: styleId,
+							},
 						},
-					},
-					'*',
-				)
-			})
-			// Clear selection after deletion
-			selectedStyles = []
-		}
+						'*',
+					)
+				})
+			}
+			return []
+		})
 		menu.closeMenu()
 	}
 
 	function refreshSelectedStyles(event: MouseEvent) {
 		event.stopPropagation()
-		if (selectedStyles && selectedStyles.length > 0) {
-			selectedStyles.forEach((styleId) => {
-				parent.postMessage(
-					{
-						pluginMessage: {
-							type: 'update-instances',
-							id: styleId,
+		selectedStyles.update((currentStyles) => {
+			if (currentStyles && currentStyles.length > 0) {
+				currentStyles.forEach((styleId) => {
+					parent.postMessage(
+						{
+							pluginMessage: {
+								type: 'update-instances',
+								id: styleId,
+							},
 						},
-					},
-					'*',
-				)
-			})
-		}
+						'*',
+					)
+				})
+			}
+			return currentStyles
+		})
 		menu.closeMenu()
 	}
 </script>
@@ -401,12 +411,23 @@
 	tabindex="0"
 	class="list-item"
 	class:selected={currentSelection.styleId === style.id}
-	class:multi-selected={selectedStyles && selectedStyles.includes(style.id)}
+	class:multi-selected={$selectedStyles && $selectedStyles.includes(style.id)}
 	style="position: relative;"
 	id="listItem{key}"
 	data-style-id={style.id}
 	bind:this={listItem}
-	oncontextmenu={(e) => menu.openMenu(e, style)}
+	oncontextmenu={async (e) => {
+		// If this layer isn't selected and there are other selected layers, deselect all
+		selectedStyles.update((currentStyles) => {
+			if (currentStyles && currentStyles.length > 0 && !currentStyles.includes(style.id)) {
+				return []
+			}
+			return currentStyles
+		})
+		// Wait for DOM to update
+		await tick()
+		menu.openMenu(e, style)
+	}}
 	role="button"
 	onclick={handleItemClick}
 	onkeydown={(e) => e.key === 'Enter' && applyStyle(style.id)}
@@ -454,14 +475,14 @@
 	</div>
 
 	<ContextMenu bind:this={menu}>
-		{#if selectedStyles && selectedStyles.length > 1}
+		{#if $selectedStyles && $selectedStyles.length > 1}
 			<!-- Bulk actions for multiple selections -->
 			<ContextMenuItem onClick={(e: MouseEvent) => refreshSelectedStyles(e)}>
-				Refresh ({selectedStyles.length})
+				Refresh ({$selectedStyles.length})
 			</ContextMenuItem>
 			<div class="divider"></div>
 			<ContextMenuItem onClick={(e: MouseEvent) => deleteSelectedStyles(e)}>
-				Delete ({selectedStyles.length})
+				Delete ({$selectedStyles.length})
 			</ContextMenuItem>
 		{:else}
 			<!-- Individual actions for single selection -->

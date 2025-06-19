@@ -4,6 +4,7 @@
 	import Styles from './Styles.svelte'
 	import { IconButton, Button } from '@figma-ui/mono-repo/library/packages/svelte'
 	import '@figma-ui/mono-repo/library/packages/styles'
+	import { selectedStyles } from './lib/stores'
 
 	function addStyle() {
 		parent.postMessage(
@@ -18,7 +19,6 @@
 
 	var styles = $state([])
 	var currentSelection = $state([])
-	var selectedStyles = $state<string[]>([])
 
 	parent.postMessage(
 		{
@@ -45,7 +45,7 @@
 <div class="">
 	{#if styles.length > 0}
 		<div class="styles">
-			<Styles {styles} {currentSelection} bind:selectedStyles />
+			<Styles {styles} {currentSelection} />
 		</div>
 	{:else}
 		<div class="no-styles">

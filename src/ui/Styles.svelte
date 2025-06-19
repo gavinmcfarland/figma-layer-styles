@@ -1,13 +1,14 @@
 <script lang="ts">
 	import ListItem from './lib/components/ListItem.svelte'
+	import { selectedStyles } from './lib/stores'
 
-	let { styles, currentSelection, selectedStyles = $bindable() } = $props()
+	let { styles, currentSelection } = $props()
 </script>
 
 {#if styles}
 	<div id="styles">
 		{#each styles as style, i}
-			<ListItem {style} {styles} {currentSelection} {selectedStyles} key={i} />
+			<ListItem {style} {styles} {currentSelection} key={i} />
 		{/each}
 	</div>
 {/if}
