@@ -1,4 +1,4 @@
-/// <reference path="./vite-override.d.ts" />
+/// <reference path="./plugma.d.ts" />
 
 import { defineConfig } from 'vite'
 import { svelte } from '@sveltejs/vite-plugin-svelte'
