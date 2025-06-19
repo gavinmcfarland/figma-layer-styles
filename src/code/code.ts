@@ -78,11 +78,11 @@ function copyPasteStyle(source: any, target?: any) {
 	}
 }
 
-function getInstances(styleId?) {
+function getInstances(styleId?: string) {
 	return figma.root.findAll((node) => node.getPluginData('styleId') === styleId)
 }
 
-function addInstance(styleId, nodeId) {
+function addInstance(styleId: string, nodeId: string) {
 	var instances = getInstances(styleId)
 
 	instances.push(nodeId)
@@ -91,7 +91,7 @@ function addInstance(styleId, nodeId) {
 }
 
 // TODO: Need to add a limit, incase user tries to add too many layer styles at once
-async function addLayerStyle(node) {
+async function addLayerStyle(node: SceneNode) {
 	var layerStyles: any = getLayerStyles()
 
 	for (let i = 0; i < layerStyles.length; i++) {
@@ -115,10 +115,10 @@ async function addLayerStyle(node) {
 	figma.root.setPluginData('styles', JSON.stringify(layerStyles))
 }
 
-function updateLayerStyle(id, name?, properties?, newId?) {
+function updateLayerStyle(id: string, name?: string, properties?: any, newId?: string) {
 	var styles = getLayerStyles()
 
-	styles.map((obj) => {
+	styles.map((obj: any) => {
 		if (obj.id == id) {
 			if (name) {
 				obj.name = name
@@ -135,7 +135,7 @@ function updateLayerStyle(id, name?, properties?, newId?) {
 	figma.root.setPluginData('styles', JSON.stringify(styles))
 }
 
-function getLayerStyles(id?) {
+function getLayerStyles(id?: string) {
 	var styles: any = figma.root.getPluginData('styles')
 
 	if (styles !== '') {
@@ -145,7 +145,7 @@ function getLayerStyles(id?) {
 	}
 
 	if (id) {
-		var newStyles = styles.filter(function (style) {
+		var newStyles = styles.filter(function (style: any) {
 			return style.id === id
 		})
 
@@ -155,9 +155,9 @@ function getLayerStyles(id?) {
 	return styles
 }
 
-function updateInstances(selection, id?) {
+function updateInstances(selection: SceneNode[], id?: string) {
 	// Find nodes that should be updated with new properties
-	var nodes
+	var nodes: SceneNode[] = []
 
 	if (selection) {
 		nodes = selection
@@ -172,6 +172,7 @@ function updateInstances(selection, id?) {
 				if (node.getPluginData('styleId') === id) {
 					nodes.push(node)
 				}
+				return false
 			})
 		}
 	}
@@ -187,11 +188,18 @@ function updateInstances(selection, id?) {
 
 		if (source) {
 			layerStyle = source
-			updateLayerStyle(styleId, null, copyPasteStyle(layerStyle))
+			updateLayerStyle(styleId, undefined, copyPasteStyle(layerStyle))
 			copyPasteStyle(layerStyle, node)
 		} else {
-			layerStyle = getLayerStyles(styleId).node
-			copyPasteStyle(layerStyle, node)
+			var layerStyleData = getLayerStyles(styleId)
+			if (layerStyleData) {
+				layerStyle = layerStyleData.node
+				copyPasteStyle(layerStyle, node)
+			} else {
+				console.log('Layer style not found for styleId:', styleId)
+				// Remove the invalid styleId from the node
+				node.setPluginData('styleId', '')
+			}
 			console.log("Original node can't be found")
 		}
 	}
@@ -205,7 +213,7 @@ export function clearLayerStyle() {
 	figma.closePlugin()
 }
 
-async function createStyles(selection) {
+async function createStyles(selection: SceneNode[]) {
 	if (selection.length > 0) {
 		if (selection.length <= 100) {
 			selection = sortNodesByPosition(selection)
@@ -226,10 +234,18 @@ async function createStyles(selection) {
 	}
 }
 
-function applyLayerStyle(selection, styleId) {
+function applyLayerStyle(selection: SceneNode[], styleId: string) {
 	// TODO: If node already has styleId and it matches it's node.id this means it is the master node for another style. Not sure how to fix this, as other style will look to this node for it. Possible fix is to change style ID of node.
 	var layerStyle
-	layerStyle = getLayerStyles(styleId).node
+	var layerStyleData = getLayerStyles(styleId)
+
+	// Check if the layer style exists
+	if (!layerStyleData) {
+		figma.notify('Layer style not found')
+		return
+	}
+
+	layerStyle = layerStyleData.node
 	var source = figma.getNodeById(styleId)
 	if (selection.length <= 100) {
 		if (selection.length > 0) {
@@ -262,19 +278,22 @@ function applyLayerStyle(selection, styleId) {
 	}
 }
 
-export function removeLayerStyle(styleId) {
+export function removeLayerStyle(styleId: string) {
 	var styles = getLayerStyles()
 
-	// Remove layer style with matching node
-	styles.splice(
-		styles.findIndex((node) => {
-			return node.id === styleId
-		}),
-		1,
-	)
+	// Find the index of the layer style with matching node
+	var styleIndex = styles.findIndex((node: any) => {
+		return node.id === styleId
+	})
 
-	// Set layer styles again
-	figma.root.setPluginData('styles', JSON.stringify(styles))
+	// Only remove if the style was found
+	if (styleIndex !== -1) {
+		styles.splice(styleIndex, 1)
+		// Set layer styles again
+		figma.root.setPluginData('styles', JSON.stringify(styles))
+	} else {
+		console.log('Layer style not found for removal:', styleId)
+	}
 
 	// Remove plugin data from all nodes with matching style id
 	// var pages = figma.root.children
@@ -291,12 +310,13 @@ export function removeLayerStyle(styleId) {
 		if (node.getPluginData('styleId') === styleId) {
 			node.setPluginData('styleId', '')
 		}
+		return false
 	})
 
 	// TODO: Remove relaunch data
 }
 
-function detachLayerStyle(node) {
+function detachLayerStyle(node: SceneNode) {
 	node.setPluginData('styleId', '')
 	node.setRelaunchData({})
 }
@@ -310,8 +330,8 @@ function postStyleList() {
 	})
 }
 
-function debounce(func, wait, immediate?) {
-	var timeout
+function debounce(func: Function, wait: number, immediate?: boolean) {
+	var timeout: any
 	return function () {
 		var context = this,
 			args = arguments
@@ -433,26 +453,30 @@ export default function () {
 					var newStyleId = node.id
 					var properties = getLayerStyles(msg.id)
 
-					copyPasteStyle(properties.node, node)
-					centerInViewport(node)
-					node.name = `${properties.name}`
-					figma.viewport.scrollAndZoomIntoView([node])
-					figma.viewport.zoom = 0.25
-					// figma.viewport.scrollAndZoomIntoView([node])
+					if (properties) {
+						copyPasteStyle(properties.node, node)
+						centerInViewport(node)
+						node.name = `${properties.name}`
+						figma.viewport.scrollAndZoomIntoView([node])
+						figma.viewport.zoom = 0.25
+						// figma.viewport.scrollAndZoomIntoView([node])
 
-					// Set as the new master layer style
-					node.setPluginData('styleId', node.id)
+						// Set as the new master layer style
+						node.setPluginData('styleId', node.id)
 
-					updateLayerStyle(msg.id, null, null, node.id)
+						updateLayerStyle(msg.id, null, null, node.id)
 
-					// Update instances with new style id
-					var instances = getInstances(msg.id)
+						// Update instances with new style id
+						var instances = getInstances(msg.id)
 
-					instances.map((node) => {
-						node.setPluginData('styleId', newStyleId)
-					})
+						instances.map((node) => {
+							node.setPluginData('styleId', newStyleId)
+						})
 
-					figma.currentPage.selection = [node]
+						figma.currentPage.selection = [node]
+					} else {
+						figma.notify('Layer style not found')
+					}
 				}
 				postStyleList()
 			}

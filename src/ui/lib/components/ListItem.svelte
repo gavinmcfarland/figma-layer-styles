@@ -161,7 +161,10 @@
 		name: '',
 	})
 
-	function updateInstances(id: string) {
+	function updateInstances(id: string, event?: MouseEvent) {
+		if (event) {
+			event.stopPropagation()
+		}
 		parent.postMessage(
 			{
 				pluginMessage: {
@@ -185,7 +188,10 @@
 		)
 	}
 
-	function updateLayerStyle(id: string) {
+	function updateLayerStyle(id: string, event?: MouseEvent) {
+		if (event) {
+			event.stopPropagation()
+		}
 		parent.postMessage(
 			{
 				pluginMessage: {
@@ -198,7 +204,10 @@
 		menu.closeMenu()
 	}
 
-	function editLayerStyle(id: string) {
+	function editLayerStyle(id: string, event?: MouseEvent) {
+		if (event) {
+			event.stopPropagation()
+		}
 		parent.postMessage(
 			{
 				pluginMessage: {
@@ -211,7 +220,12 @@
 		menu.closeMenu()
 	}
 
-	function removeStyle(id: string) {
+	function removeStyle(id: string, event?: MouseEvent) {
+		// Prevent event from bubbling up to parent list item
+		if (event) {
+			event.stopPropagation()
+		}
+
 		parent.postMessage(
 			{
 				pluginMessage: {
@@ -224,7 +238,10 @@
 		menu.closeMenu()
 	}
 
-	function renameStyle(id: string, name: string) {
+	function renameStyle(id: string, name: string, event?: MouseEvent) {
+		if (event) {
+			event.stopPropagation()
+		}
 		console.log('renameStyle', id, name)
 		parent.postMessage(
 			{
@@ -310,11 +327,11 @@
 	</div>
 
 	<ContextMenu bind:this={menu}>
-		<ContextMenuItem onClick={() => updateInstances(style.id)}>Refresh</ContextMenuItem>
-		<ContextMenuItem onClick={() => editLayerStyle(style.id)}>Edit style</ContextMenuItem>
+		<ContextMenuItem onClick={(e: MouseEvent) => updateInstances(style.id, e)}>Refresh</ContextMenuItem>
+		<ContextMenuItem onClick={(e: MouseEvent) => editLayerStyle(style.id, e)}>Edit style</ContextMenuItem>
 		<ContextMenuItem onClick={(e: MouseEvent) => editStyle(e, style)}>Rename</ContextMenuItem>
 		<div class="divider"></div>
-		<ContextMenuItem onClick={() => removeStyle(style.id)}>Delete</ContextMenuItem>
+		<ContextMenuItem onClick={(e: MouseEvent) => removeStyle(style.id, e)}>Delete</ContextMenuItem>
 	</ContextMenu>
 </div>
 
