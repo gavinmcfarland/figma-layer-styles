@@ -8,11 +8,13 @@
 	import { clickOutside } from '../clickOutside'
 	interface Props {
 		style: any
+		styles: any[]
 		currentSelection?: any
+		selectedStyles?: string[]
 		key?: number
 	}
 
-	let { style, currentSelection, key }: Props = $props()
+	let { style, styles, currentSelection, selectedStyles = $bindable(), key }: Props = $props()
 	let listItem: HTMLElement
 	let menu: ContextMenu
 	let inputComponent = $state<Input>()
@@ -280,13 +282,117 @@
 		})
 	}
 
-	$effect(() => {
-		if (currentSelection.styleId === style.id) {
-			listItem.classList.add('selected')
-		} else {
-			listItem.classList.remove('selected')
+	function handleItemClick(event: MouseEvent) {
+		// If Ctrl/Cmd key is pressed, toggle individual selection
+		if (event.ctrlKey || event.metaKey) {
+			toggleSelection(event)
+			return
 		}
-	})
+
+		// If Shift key is pressed, select range
+		if (event.shiftKey) {
+			selectRange(event)
+			return
+		}
+
+		// Normal click: clear selection and apply this style
+		if (selectedStyles && selectedStyles.length > 0) {
+			selectedStyles = []
+		}
+
+		applyStyle(style.id)
+	}
+
+	function toggleSelection(event: MouseEvent) {
+		event.stopPropagation()
+		if (!selectedStyles) {
+			selectedStyles = []
+		}
+
+		const index = selectedStyles.indexOf(style.id)
+		if (index > -1) {
+			selectedStyles.splice(index, 1)
+		} else {
+			selectedStyles.push(style.id)
+		}
+	}
+
+	function selectRange(event: MouseEvent) {
+		event.stopPropagation()
+		if (!selectedStyles) {
+			selectedStyles = []
+		}
+
+		// Get all style IDs from the parent component
+		const allStyleIds = styles.map((s: any) => s.id)
+		const currentIndex = allStyleIds.indexOf(style.id)
+
+		// Find the last selected item to determine range
+		let lastSelectedIndex = -1
+		for (let i = 0; i < allStyleIds.length; i++) {
+			if (selectedStyles.includes(allStyleIds[i])) {
+				lastSelectedIndex = i
+			}
+		}
+
+		if (lastSelectedIndex === -1) {
+			// If no previous selection, just select this item
+			selectedStyles = [style.id]
+		} else {
+			// Select range from last selected to current
+			const start = Math.min(lastSelectedIndex, currentIndex)
+			const end = Math.max(lastSelectedIndex, currentIndex)
+
+			// Add all items in range to selection
+			for (let i = start; i <= end; i++) {
+				const styleId = allStyleIds[i]
+				if (!selectedStyles.includes(styleId)) {
+					selectedStyles.push(styleId)
+				}
+			}
+
+			// Force reactivity by reassigning the array
+			selectedStyles = selectedStyles
+		}
+	}
+
+	function deleteSelectedStyles(event: MouseEvent) {
+		event.stopPropagation()
+		if (selectedStyles && selectedStyles.length > 0) {
+			selectedStyles.forEach((styleId) => {
+				parent.postMessage(
+					{
+						pluginMessage: {
+							type: 'remove-style',
+							id: styleId,
+						},
+					},
+					'*',
+				)
+			})
+			// Clear selection after deletion
+			selectedStyles = []
+		}
+		menu.closeMenu()
+	}
+
+	function refreshSelectedStyles(event: MouseEvent) {
+		event.stopPropagation()
+		if (selectedStyles && selectedStyles.length > 0) {
+			selectedStyles.forEach((styleId) => {
+				parent.postMessage(
+					{
+						pluginMessage: {
+							type: 'update-instances',
+							id: styleId,
+						},
+					},
+					'*',
+				)
+			})
+		}
+		menu.closeMenu()
+	}
 </script>
 
 <svelte:body />
@@ -294,15 +400,32 @@
 <div
 	tabindex="0"
 	class="list-item"
+	class:selected={currentSelection.styleId === style.id}
+	class:multi-selected={selectedStyles && selectedStyles.includes(style.id)}
 	style="position: relative;"
 	id="listItem{key}"
 	data-style-id={style.id}
 	bind:this={listItem}
 	oncontextmenu={(e) => menu.openMenu(e, style)}
 	role="button"
-	onclick={() => applyStyle(style.id)}
+	onclick={handleItemClick}
 	onkeydown={(e) => e.key === 'Enter' && applyStyle(style.id)}
 >
+	<!-- Selection indicator -->
+	<!-- {#if selectedStyles && selectedStyles.includes(style.id)}
+		<div class="selection-indicator">
+			<svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+				<path
+					d="M2 6L5 9L10 3"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+				/>
+			</svg>
+		</div>
+	{/if} -->
+
 	<div role="button" tabindex="0" style="display: flex; flex-grow: 1;">
 		<div style="display: flex; align-items: center; gap: var(--spacer-2);">
 			<LayerIcon style={styleCss(style)} />
@@ -331,11 +454,23 @@
 	</div>
 
 	<ContextMenu bind:this={menu}>
-		<ContextMenuItem onClick={(e: MouseEvent) => updateInstances(style.id, e)}>Refresh</ContextMenuItem>
-		<ContextMenuItem onClick={(e: MouseEvent) => editLayerStyle(style.id, e)}>Edit style</ContextMenuItem>
-		<ContextMenuItem onClick={(e: MouseEvent) => editStyle(e, style)}>Rename</ContextMenuItem>
-		<div class="divider"></div>
-		<ContextMenuItem onClick={(e: MouseEvent) => removeStyle(style.id, e)}>Delete</ContextMenuItem>
+		{#if selectedStyles && selectedStyles.length > 1}
+			<!-- Bulk actions for multiple selections -->
+			<ContextMenuItem onClick={(e: MouseEvent) => refreshSelectedStyles(e)}>
+				Refresh ({selectedStyles.length})
+			</ContextMenuItem>
+			<div class="divider"></div>
+			<ContextMenuItem onClick={(e: MouseEvent) => deleteSelectedStyles(e)}>
+				Delete ({selectedStyles.length})
+			</ContextMenuItem>
+		{:else}
+			<!-- Individual actions for single selection -->
+			<ContextMenuItem onClick={(e: MouseEvent) => updateInstances(style.id, e)}>Refresh</ContextMenuItem>
+			<ContextMenuItem onClick={(e: MouseEvent) => editLayerStyle(style.id, e)}>Edit style</ContextMenuItem>
+			<ContextMenuItem onClick={(e: MouseEvent) => editStyle(e, style)}>Rename</ContextMenuItem>
+			<div class="divider"></div>
+			<ContextMenuItem onClick={(e: MouseEvent) => removeStyle(style.id, e)}>Delete</ContextMenuItem>
+		{/if}
 	</ContextMenu>
 </div>
 
@@ -347,10 +482,40 @@
 		font-size: var(--font-size-default);
 		padding-inline: var(--spacer-3);
 		height: 32px;
+		position: relative;
+		border-left: 3px solid transparent;
 
 		&:hover {
 			background-color: var(--figma-color-bg-hover);
 		}
+
+		&.selected {
+			background-color: var(--figma-color-bg-selected);
+		}
+
+		&.multi-selected {
+			background-color: var(--figma-color-bg-selected);
+		}
+
+		&.multi-selected:hover {
+			background-color: var(--figma-color-bg-selected-hover);
+		}
+	}
+
+	.selection-indicator {
+		position: absolute;
+		left: 8px;
+		top: 50%;
+		transform: translateY(-50%);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 16px;
+		height: 16px;
+		background-color: var(--figma-color-bg-brand);
+		border-radius: 50%;
+		color: var(--figma-color-text-onbrand);
+		z-index: 1;
 	}
 
 	.divider {

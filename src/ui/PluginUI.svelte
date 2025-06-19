@@ -18,6 +18,7 @@
 
 	var styles = $state([])
 	var currentSelection = $state([])
+	var selectedStyles = $state<string[]>([])
 
 	parent.postMessage(
 		{
@@ -44,7 +45,7 @@
 <div class="">
 	{#if styles.length > 0}
 		<div class="styles">
-			<Styles {styles} {currentSelection} />
+			<Styles {styles} {currentSelection} bind:selectedStyles />
 		</div>
 	{:else}
 		<div class="no-styles">
