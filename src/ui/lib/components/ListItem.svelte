@@ -491,13 +491,10 @@
 	<ContextMenu bind:this={menu}>
 		{#if $selectedStyles && $selectedStyles.length > 1}
 			<!-- Bulk actions for multiple selections -->
-			<ContextMenuItem onClick={(e: MouseEvent) => refreshSelectedStyles(e)}>
-				Refresh ({$selectedStyles.length})
-			</ContextMenuItem>
+			<!-- <div class="selection-count">{$selectedStyles.length} selected</div> -->
+			<ContextMenuItem onClick={(e: MouseEvent) => refreshSelectedStyles(e)}>Refresh</ContextMenuItem>
 			<div class="divider"></div>
-			<ContextMenuItem onClick={(e: MouseEvent) => deleteSelectedStyles(e)}>
-				Delete ({$selectedStyles.length})
-			</ContextMenuItem>
+			<ContextMenuItem onClick={(e: MouseEvent) => deleteSelectedStyles(e)}>Delete</ContextMenuItem>
 		{:else}
 			<!-- Individual actions for single selection -->
 			<ContextMenuItem onClick={(e: MouseEvent) => updateInstances(style.id, e)}>Refresh</ContextMenuItem>
@@ -558,5 +555,16 @@
 		display: block;
 		margin-top: 8px;
 		margin-bottom: 8px;
+	}
+
+	.selection-count {
+		color: var(--figma-color-text-bg);
+		font-size: 11px;
+		padding: 8px 12px;
+		padding-top: 0px;
+		padding-bottom: 8px;
+		text-align: center;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+		margin-bottom: 4px;
 	}
 </style>
