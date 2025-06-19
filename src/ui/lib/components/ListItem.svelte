@@ -257,14 +257,10 @@
 	bind:this={listItem}
 	oncontextmenu={(e) => menu.openMenu(e, style)}
 	role="button"
+	onclick={() => applyStyle(style.id)}
+	onkeydown={(e) => e.key === 'Enter' && applyStyle(style.id)}
 >
-	<div
-		role="button"
-		tabindex="0"
-		onclick={() => applyStyle(style.id)}
-		style="display: flex; flex-grow: 1;"
-		onkeydown={(e) => e.key === 'Enter' && applyStyle(style.id)}
-	>
+	<div role="button" tabindex="0" style="display: flex; flex-grow: 1;">
 		<div style="display: flex; align-items: center; gap: var(--spacer-2);">
 			<LayerIcon style={styleCss(style)} />
 			<div class="field" style="flex-grow: 1;">
