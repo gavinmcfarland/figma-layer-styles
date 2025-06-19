@@ -40,6 +40,10 @@
 			effects?: any[]
 			dashPattern?: number[]
 			strokeWeight?: number
+			strokeTopWeight?: number
+			strokeBottomWeight?: number
+			strokeRightWeight?: number
+			strokeLeftWeight?: number
 		}
 	}) {
 		var string = ''
@@ -69,8 +73,26 @@
 					borderStyle = 'dashed'
 				}
 
-				borderWeight = `${style.node.strokeWeight}px`
-				border = `border: ${borderWeight} ${borderStyle} ${borderRgba};`
+				// Check if we have directional stroke weights
+				const hasDirectionalStrokes =
+					style.node.strokeTopWeight !== undefined ||
+					style.node.strokeBottomWeight !== undefined ||
+					style.node.strokeRightWeight !== undefined ||
+					style.node.strokeLeftWeight !== undefined
+
+				if (hasDirectionalStrokes) {
+					// Use individual border properties for directional strokes
+					const topWeight = style.node.strokeTopWeight ?? style.node.strokeWeight ?? 0
+					const bottomWeight = style.node.strokeBottomWeight ?? style.node.strokeWeight ?? 0
+					const rightWeight = style.node.strokeRightWeight ?? style.node.strokeWeight ?? 0
+					const leftWeight = style.node.strokeLeftWeight ?? style.node.strokeWeight ?? 0
+
+					border = `border-top: ${topWeight}px ${borderStyle} ${borderRgba}; border-bottom: ${bottomWeight}px ${borderStyle} ${borderRgba}; border-right: ${rightWeight}px ${borderStyle} ${borderRgba}; border-left: ${leftWeight}px ${borderStyle} ${borderRgba};`
+				} else {
+					// Use single border property for uniform stroke weight
+					borderWeight = `${style.node.strokeWeight}px`
+					border = `border: ${borderWeight} ${borderStyle} ${borderRgba};`
+				}
 			}
 		}
 
@@ -288,7 +310,7 @@
 	</div>
 
 	<ContextMenu bind:this={menu}>
-		<ContextMenuItem onClick={updateInstances(style.id)}>Refresh</ContextMenuItem>
+		<ContextMenuItem onClick={() => updateInstances(style.id)}>Refresh</ContextMenuItem>
 		<ContextMenuItem onClick={() => editLayerStyle(style.id)}>Edit style</ContextMenuItem>
 		<ContextMenuItem onClick={(e: MouseEvent) => editStyle(e, style)}>Rename</ContextMenuItem>
 		<div class="divider"></div>
