@@ -1,3 +1,7 @@
 html {
 	letter-spacing: 0.005em;
 }
+
+#app {
+	height: 100%;
+}

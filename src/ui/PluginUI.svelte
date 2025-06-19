@@ -5,6 +5,7 @@
 	import { IconButton, Button } from '@figma-ui/mono-repo/library/packages/svelte'
 	import '@figma-ui/mono-repo/library/packages/styles'
 	import { selectedStyles } from './lib/stores'
+	import { clickOutside } from './lib/clickOutside'
 
 	function addStyle() {
 		parent.postMessage(
@@ -17,8 +18,16 @@
 		)
 	}
 
+	function handleClickOutside() {
+		console.log('Click outside detected, clearing selection')
+		selectedStyles.set([])
+		console.log('Selection cleared, current store value:', $selectedStyles)
+	}
+
 	var styles = $state([])
 	var currentSelection = $state([])
+	let stylesContainer: HTMLElement
+	let clickOutsideUnsubscribe: any
 
 	parent.postMessage(
 		{
@@ -38,13 +47,37 @@
 			}
 		}
 	})
+
+	// Set up click outside handler when stylesContainer is available
+	$effect(() => {
+		if (stylesContainer) {
+			// Clean up previous handler if it exists
+			if (clickOutsideUnsubscribe) {
+				clickOutsideUnsubscribe.destroy()
+			}
+
+			// Set up new handler
+			clickOutsideUnsubscribe = clickOutside(stylesContainer, handleClickOutside)
+		}
+	})
 </script>
 
 <!-- <svelte:window onmessage={onLoad} /> -->
 
-<div class="">
+<div
+	class="app-container"
+	onclick={(e) => {
+		// If click is on the main container (not on styles), clear selection
+		console.log('clicking container')
+		// if (e.target === e.currentTarget) {
+		console.log('Main container clicked, clearing selection')
+		selectedStyles.set([])
+		console.log('Selection cleared from main container, current store value:', $selectedStyles)
+		// }
+	}}
+>
 	{#if styles.length > 0}
-		<div class="styles">
+		<div class="styles" bind:this={stylesContainer}>
 			<Styles {styles} {currentSelection} />
 		</div>
 	{:else}
@@ -60,6 +93,9 @@
 </div>
 
 <style lang="ts">
+	.app-container {
+		height: 100%;
+	}
 	.action-bar {
 		display: flex;
 		align-items: center;

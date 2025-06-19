@@ -403,6 +403,20 @@
 		})
 		menu.closeMenu()
 	}
+
+	$effect(() => {
+		if ($selectedStyles && $selectedStyles.includes(style.id)) {
+			if (listItem) {
+				listItem.classList.add('multi-selected')
+				console.log('Added multi-selected class to:', style.name)
+			}
+		} else {
+			if (listItem) {
+				listItem.classList.remove('multi-selected')
+				console.log('Removed multi-selected class from:', style.name)
+			}
+		}
+	})
 </script>
 
 <svelte:body />
@@ -416,7 +430,7 @@
 	id="listItem{key}"
 	data-style-id={style.id}
 	bind:this={listItem}
-	oncontextmenu={async (e) => {
+	oncontextmenu={(e) => {
 		// If this layer isn't selected and there are other selected layers, deselect all
 		selectedStyles.update((currentStyles) => {
 			if (currentStyles && currentStyles.length > 0 && !currentStyles.includes(style.id)) {
@@ -424,8 +438,8 @@
 			}
 			return currentStyles
 		})
-		// Wait for DOM to update
-		await tick()
+
+		// Open menu immediately
 		menu.openMenu(e, style)
 	}}
 	role="button"
