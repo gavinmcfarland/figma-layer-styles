@@ -203,7 +203,7 @@ export function clearLayerStyle() {
 
 async function createStyles(selection) {
 	if (selection.length > 0) {
-		if (selection.length <= 20) {
+		if (selection.length <= 100) {
 			selection = sortNodesByPosition(selection)
 			for (var i = 0; i < selection.length; i++) {
 				var node = selection[i]
@@ -215,7 +215,7 @@ async function createStyles(selection) {
 				addLayerStyle(node)
 			}
 		} else {
-			figma.notify('Limited to 20 layer styles at a time')
+			figma.notify('Limited to 100 layer styles at a time')
 		}
 	} else {
 		figma.notify('No layers selected')
