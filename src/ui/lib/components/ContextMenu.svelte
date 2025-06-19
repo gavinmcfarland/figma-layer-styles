@@ -25,7 +25,7 @@
 		})
 	})
 
-	export function closeMenu(element: HTMLElement) {
+	export function closeMenu(element?: HTMLElement) {
 		if (!element) {
 			menu?.classList.remove('show')
 		} else {

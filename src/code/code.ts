@@ -205,6 +205,11 @@ function updateInstances(selection: SceneNode[], id?: string) {
 		}
 	}
 
+	// Commit undo after updating instances
+	if (nodes.length > 0) {
+		figma.commitUndo()
+	}
+
 	// figma.closePlugin()
 }
 
@@ -271,6 +276,7 @@ function applyLayerStyle(selection: SceneNode[], styleId: string) {
 				}
 			}
 			figma.notify('Layer style applied')
+			figma.commitUndo()
 		} else {
 			figma.notify('Please select a layer')
 		}
@@ -313,6 +319,9 @@ export function removeLayerStyle(styleId: string) {
 		}
 		return false
 	})
+
+	// Commit undo after removing layer style
+	figma.commitUndo()
 
 	// TODO: Remove relaunch data
 }
@@ -438,6 +447,7 @@ export default function () {
 				var properties = copyPasteStyle(node)
 				updateLayerStyle(msg.id, null, properties, node.id)
 				figma.currentPage.selection[0].setPluginData('styleId', node.id)
+				figma.commitUndo()
 				postStyleList()
 			}
 
@@ -475,6 +485,9 @@ export default function () {
 						})
 
 						figma.currentPage.selection = [node]
+
+						// Commit undo after creating new node and updating instances
+						figma.commitUndo()
 					} else {
 						figma.notify('Layer style not found')
 					}
@@ -522,6 +535,7 @@ export default function () {
 			detachLayerStyle(node)
 		}
 		figma.notify('Layer style detached')
+		figma.commitUndo()
 		figma.closePlugin()
 	}
 }
