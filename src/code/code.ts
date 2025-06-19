@@ -348,6 +348,8 @@ function updatePreview(nodeBeingEdited) {
 }
 
 export default function () {
+	// clearLayerStyle()
+
 	figma.on('selectionchange', () => {
 		// Post selection to UI and set current node being edited
 
