@@ -174,6 +174,7 @@
 			},
 			'*',
 		)
+		menu.closeMenu()
 	}
 
 	function applyStyle(id: string) {
@@ -257,6 +258,9 @@
 	}
 
 	async function editStyle(event: MouseEvent, style: { id: string; name: string }) {
+		// Prevent event from bubbling up to parent list item
+		event.stopPropagation()
+
 		menu.closeMenu()
 		showField = true
 		listItem.classList.add('blue-bg')

@@ -156,6 +156,7 @@ function getLayerStyles(id?: string) {
 }
 
 function updateInstances(selection: SceneNode[], id?: string) {
+	console.log('updateInstances', selection, id)
 	// Find nodes that should be updated with new properties
 	var nodes: SceneNode[] = []
 
