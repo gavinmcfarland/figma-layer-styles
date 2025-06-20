@@ -100,20 +100,109 @@
 
 		if (style.node.fills && style.node.fills.length > 0) {
 			var fills = []
+			var solidBackground = null
+
 			for (let i = 0; i < style.node.fills.length; i++) {
 				var fill = style.node.fills[i]
 
 				if (fill.type === 'SOLID') {
-					fills.push(
-						`linear-gradient( rgba(${fill.color.r * 255}, ${
-							fill.color.g * 255
-						}, ${fill.color.b * 255}, ${fill.opacity}),
-                    rgba(${fill.color.r * 255}, ${fill.color.g * 255}, ${fill.color.b * 255}, ${fill.opacity}))`,
-					)
+					// For solid fills, use background-color instead of gradient
+					const r = Math.round(fill.color.r * 255)
+					const g = Math.round(fill.color.g * 255)
+					const b = Math.round(fill.color.b * 255)
+					const opacity = fill.opacity ?? 1
+
+					solidBackground = `background-color: rgba(${r}, ${g}, ${b}, ${opacity});`
+				} else if (fill.type === 'GRADIENT_LINEAR') {
+					// Handle linear gradients
+					if (fill.gradientStops && fill.gradientStops.length > 0) {
+						const stops = fill.gradientStops
+							.map((stop: any) => {
+								const r = Math.round(stop.color.r * 255)
+								const g = Math.round(stop.color.g * 255)
+								const b = Math.round(stop.color.b * 255)
+								const a = stop.color.a ?? 1
+								const position = Math.round(stop.position * 100)
+								return `rgba(${r}, ${g}, ${b}, ${a}) ${position}%`
+							})
+							.join(', ')
+
+						// Calculate gradient direction from gradientTransform
+						let direction = 'to right' // default
+						if (fill.gradientTransform && fill.gradientTransform.length >= 2) {
+							const transform = fill.gradientTransform
+
+							// Debug: Log the transform matrix
+							// console.log('Gradient transform:', transform)
+
+							// Use the helper function with method B (most common)
+							// You can change this to 'A', 'C', or 'D' to test different approaches
+							direction = calculateGradientDirection(transform, 'B')
+
+							// Log all possible directions for debugging
+							// console.log('All gradient directions:', {
+							// 	A: calculateGradientDirection(transform, 'A'),
+							// 	B: calculateGradientDirection(transform, 'B'),
+							// 	C: calculateGradientDirection(transform, 'C'),
+							// 	D: calculateGradientDirection(transform, 'D'),
+							// })
+						}
+
+						fills.push(`linear-gradient(${direction}, ${stops})`)
+					}
+				} else if (fill.type === 'GRADIENT_RADIAL') {
+					// Handle radial gradients
+					if (fill.gradientStops && fill.gradientStops.length > 0) {
+						const stops = fill.gradientStops
+							.map((stop: any) => {
+								const r = Math.round(stop.color.r * 255)
+								const g = Math.round(stop.color.g * 255)
+								const b = Math.round(stop.color.b * 255)
+								const a = stop.color.a ?? 1
+								const position = Math.round(stop.position * 100)
+								return `rgba(${r}, ${g}, ${b}, ${a}) ${position}%`
+							})
+							.join(', ')
+
+						fills.push(`radial-gradient(circle, ${stops})`)
+					}
+				} else if (fill.type === 'GRADIENT_ANGULAR') {
+					// Handle angular/conic gradients
+					if (fill.gradientStops && fill.gradientStops.length > 0) {
+						const stops = fill.gradientStops
+							.map((stop: any) => {
+								const r = Math.round(stop.color.r * 255)
+								const g = Math.round(stop.color.g * 255)
+								const b = Math.round(stop.color.b * 255)
+								const a = stop.color.a ?? 1
+								const position = Math.round(stop.position * 360)
+								return `rgba(${r}, ${g}, ${b}, ${a}) ${position}deg`
+							})
+							.join(', ')
+
+						fills.push(`conic-gradient(${stops})`)
+					}
+				} else if (fill.type === 'IMAGE') {
+					// Handle image fills
+					if (fill.imageRef) {
+						// Note: In a real implementation, you'd need to get the actual image URL
+						// from Figma's API. For now, we'll use a placeholder
+						fills.push(
+							`url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect width="100" height="100" fill="%23ccc"/><text x="50" y="50" text-anchor="middle" dy=".3em" fill="%23666">IMG</text></svg>')`,
+						)
+					}
 				}
 			}
 
-			background = `background-image: ${fills.reverse().join(', ')};`
+			// Use solid background if available, otherwise use gradients
+			if (solidBackground) {
+				background = solidBackground
+				if (fills.length > 0) {
+					background += ` background-image: ${fills.reverse().join(', ')};`
+				}
+			} else if (fills.length > 0) {
+				background = `background-image: ${fills.reverse().join(', ')};`
+			}
 		}
 
 		if (style.node.cornerRadius) {
@@ -417,6 +506,46 @@
 			}
 		}
 	})
+
+	// Helper function to calculate gradient direction from Figma's gradientTransform
+	function calculateGradientDirection(transform: number[][], method: 'A' | 'B' | 'C' | 'D' = 'B'): string {
+		try {
+			const dx = transform[0][0]
+			const dy = transform[0][1]
+
+			// Calculate the angle in degrees
+			const angle = Math.atan2(dy, dx) * (180 / Math.PI)
+
+			// Normalize angle to be between 0 and 360
+			const normalizedAngle = ((angle % 360) + 360) % 360
+
+			let cssAngle: number
+
+			switch (method) {
+				case 'A':
+					cssAngle = normalizedAngle // No adjustment
+					break
+				case 'B':
+					cssAngle = (normalizedAngle + 90) % 360 // Add 90 degrees
+					break
+				case 'C':
+					cssAngle = (normalizedAngle - 90 + 360) % 360 // Subtract 90 degrees
+					break
+				case 'D':
+					cssAngle = (normalizedAngle + 180) % 360 // Flip the angle
+					break
+				default:
+					cssAngle = (normalizedAngle + 90) % 360
+			}
+
+			return `${cssAngle}deg`
+		} catch (error) {
+			console.warn('Failed to calculate gradient direction:', error)
+			return 'to right'
+		}
+	}
+
+	function generateCSS(style: any) {}
 </script>
 
 <svelte:body />

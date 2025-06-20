@@ -26,6 +26,7 @@
 
 	var styles = $state([])
 	var currentSelection = $state([])
+	var stylesLoaded = $state(false)
 	let stylesContainer: HTMLElement
 	let clickOutsideUnsubscribe: any
 
@@ -40,6 +41,7 @@
 		window.onmessage = (event) => {
 			if (event.data.pluginMessage.type === 'STYLE_LIST') {
 				styles = event.data.pluginMessage.styles
+				stylesLoaded = true
 			}
 
 			if (event.data.pluginMessage.type === 'CURRENT_SELECTION') {
@@ -82,11 +84,11 @@
 	}}
 	tabindex="0"
 >
-	{#if styles.length > 0}
+	{#if stylesLoaded && styles.length > 0}
 		<div class="styles" bind:this={stylesContainer}>
 			<Styles {styles} {currentSelection} />
 		</div>
-	{:else}
+	{:else if stylesLoaded && styles.length === 0}
 		<div class="no-styles">
 			<p class="text">Select a layer<br /> to create a style from</p>
 		</div>

@@ -55,7 +55,7 @@ const styleProps = [
 
 function copyPasteStyle(source: any, target?: any) {
 	if (target) {
-		return copyPaste(source, target, {
+		let style = copyPaste(source, target, {
 			include: styleProps,
 			exclude: [
 				'autoRename',
@@ -73,8 +73,12 @@ function copyPasteStyle(source: any, target?: any) {
 				'layoutMode',
 			],
 		})
+		// console.log('style 1', style)
+		return style
 	} else {
-		return copyPaste(source, {})
+		let style = copyPaste(source, {})
+		// console.log('style 2', style)
+		return style
 	}
 }
 
@@ -171,7 +175,13 @@ function updateInstances(selection: SceneNode[], id?: string) {
 		for (let i = 0; i < length; i++) {
 			pages[i].findAll((node) => {
 				if (node.getPluginData('styleId') === id) {
-					nodes.push(node)
+					// Validate node still exists and is accessible
+					if (!nodeRemovedByUser(node)) {
+						nodes.push(node)
+					} else {
+						// Node is no longer valid, clear its styleId
+						node.setPluginData('styleId', '')
+					}
 				}
 				return false
 			})
@@ -187,7 +197,7 @@ function updateInstances(selection: SceneNode[], id?: string) {
 		var source = figma.getNodeById(styleId)
 		var layerStyle
 
-		if (source) {
+		if (source && !nodeRemovedByUser(source)) {
 			layerStyle = source
 			updateLayerStyle(styleId, undefined, copyPasteStyle(layerStyle))
 			copyPasteStyle(layerStyle, node)
@@ -221,7 +231,7 @@ export function clearLayerStyle() {
 
 async function createStyles(selection: SceneNode[]) {
 	if (selection.length > 0) {
-		if (selection.length <= 100) {
+		if (selection.length <= 500) {
 			selection = sortNodesByPosition(selection)
 			for (var i = 0; i < selection.length; i++) {
 				var node = selection[i]
@@ -233,7 +243,7 @@ async function createStyles(selection: SceneNode[]) {
 				addLayerStyle(node)
 			}
 		} else {
-			figma.notify('Limited to 100 layer styles at a time')
+			figma.notify('Limited to 500 layer styles at a time')
 		}
 	} else {
 		figma.notify('No layers selected')
@@ -253,7 +263,7 @@ function applyLayerStyle(selection: SceneNode[], styleId: string) {
 
 	layerStyle = layerStyleData.node
 	var source = figma.getNodeById(styleId)
-	if (selection.length <= 100) {
+	if (selection.length <= 500) {
 		if (selection.length > 0) {
 			for (let i = 0; i < selection.length; i++) {
 				var node = selection[i]
@@ -281,7 +291,7 @@ function applyLayerStyle(selection: SceneNode[], styleId: string) {
 			figma.notify('Please select a layer')
 		}
 	} else {
-		figma.notify('Limited to 100 layers at a time')
+		figma.notify('Limited to 500 layers at a time')
 	}
 }
 
@@ -359,20 +369,35 @@ function debounce(func: Function, wait: number, immediate?: boolean) {
 // This updates preview inside layer styles list
 // TODO: Need to be careful if something happens to node while it's being watched, for example if it's deleted
 
-// The node being edited
-var nodeBeingEdited: SceneNode | null = null
+// The node being edited - use ID instead of direct reference to prevent memory leaks
+var nodeBeingEditedId: string | null = null
 var previewIntervalId: number | null = null
 
 function checkNodeBeingEdited(selection: SceneNode[]) {
 	if (selection && selection.length === 1) {
 		var node = selection[0]
 		if (node.id === node.getPluginData('styleId')) {
-			nodeBeingEdited = node
+			nodeBeingEditedId = node.id
 		}
 	}
 }
 
-function updatePreview(nodeBeingEdited: SceneNode) {
+function getNodeBeingEdited(): SceneNode | null {
+	if (!nodeBeingEditedId) return null
+
+	const node = figma.getNodeById(nodeBeingEditedId)
+	if (!node || nodeRemovedByUser(node)) {
+		// Node no longer exists, clear the reference
+		nodeBeingEditedId = null
+		clearPreviewInterval()
+		return null
+	}
+
+	return node as SceneNode
+}
+
+function updatePreview() {
+	const nodeBeingEdited = getNodeBeingEdited()
 	if (nodeBeingEdited) {
 		var layerStyleId = nodeBeingEdited.getPluginData('styleId')
 		var properties = copyPasteStyle(nodeBeingEdited)
@@ -389,8 +414,22 @@ function clearPreviewInterval() {
 	}
 }
 
+function clearNodeBeingEdited() {
+	nodeBeingEditedId = null
+	clearPreviewInterval()
+}
+
+// Cleanup function to be called when plugin closes or reloads
+export function cleanupPlugin() {
+	clearNodeBeingEdited()
+	// Clear any other global references here if needed
+}
+
 export default function () {
 	// clearLayerStyle()
+
+	// Cleanup on plugin start to ensure clean state
+	cleanupPlugin()
 
 	figma.on('selectionchange', () => {
 		// Clear any existing preview interval
@@ -404,7 +443,7 @@ export default function () {
 		if (node) {
 			if (node.id === node.getPluginData('styleId')) {
 				styleId = node.getPluginData('styleId')
-				nodeBeingEdited = node
+				nodeBeingEditedId = node.id
 			}
 		}
 
@@ -415,15 +454,14 @@ export default function () {
 			},
 		})
 
-		if (nodeBeingEdited) {
+		if (nodeBeingEditedId) {
 			previewIntervalId = setInterval(() => {
-				updatePreview(nodeBeingEdited!)
+				updatePreview()
 			}, 600)
 		}
 		// If user unselects then change node being edited to null
 		if (figma.currentPage.selection.length === 0) {
-			nodeBeingEdited = null
-			clearPreviewInterval()
+			clearNodeBeingEdited()
 		}
 	})
 
@@ -440,7 +478,7 @@ export default function () {
 			}
 
 			if (msg.type === 'add-style') {
-				createStyles(figma.currentPage.selection)
+				createStyles([...figma.currentPage.selection])
 				postStyleList()
 			}
 
@@ -450,7 +488,7 @@ export default function () {
 			}
 
 			if (msg.type === 'update-instances') {
-				updateInstances(figma.currentPage.selection, msg.id)
+				updateInstances([...figma.currentPage.selection], msg.id)
 				postStyleList()
 			}
 
