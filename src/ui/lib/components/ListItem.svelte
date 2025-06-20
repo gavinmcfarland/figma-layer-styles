@@ -89,10 +89,10 @@
 					const rightWeight = style.node.strokeRightWeight ?? style.node.strokeWeight ?? 0
 					const leftWeight = style.node.strokeLeftWeight ?? style.node.strokeWeight ?? 0
 
-					border = `border-top: ${topWeight}px ${borderStyle} ${borderRgba}; border-bottom: ${bottomWeight}px ${borderStyle} ${borderRgba}; border-right: ${rightWeight}px ${borderStyle} ${borderRgba}; border-left: ${leftWeight}px ${borderStyle} ${borderRgba};`
+					border = `border-top: ${topWeight / 1.5}px ${borderStyle} ${borderRgba}; border-bottom: ${bottomWeight / 1.5}px ${borderStyle} ${borderRgba}; border-right: ${rightWeight / 1.5}px ${borderStyle} ${borderRgba}; border-left: ${leftWeight / 1.5}px ${borderStyle} ${borderRgba};`
 				} else {
 					// Use single border property for uniform stroke weight
-					borderWeight = `${style.node.strokeWeight}px`
+					borderWeight = `${style.node.strokeWeight / 1.5}px`
 					border = `border: ${borderWeight} ${borderStyle} ${borderRgba};`
 				}
 			}
