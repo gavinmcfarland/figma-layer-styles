@@ -177,7 +177,11 @@ function updateInstances(selection: SceneNode[], id?: string) {
 				if (node.getPluginData('styleId') === id) {
 					// Validate node still exists and is accessible
 					if (!nodeRemovedByUser(node)) {
-						nodes.push(node)
+						// Exclude the master node (the node that stores the layer style)
+						// The master node has its own id as the styleId
+						if (node.id !== id) {
+							nodes.push(node)
+						}
 					} else {
 						// Node is no longer valid, clear its styleId
 						node.setPluginData('styleId', '')
