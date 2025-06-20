@@ -1,5 +1,12 @@
+body {
+	background-color: var(--figma-color-bg);
+	color: var(--figma-color-text);
+}
+
 html {
 	letter-spacing: 0.005em;
+	scrollbar-width: thin;
+	scrollbar-color: var(--figma-color-bg-tertiary) var(--figma-color-bg);
 }
 
 #app {
