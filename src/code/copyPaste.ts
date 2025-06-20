@@ -150,24 +150,20 @@ const variableConsumptionMapToProperty: { [key: string]: string } = {
 	RECTANGLE_BOTTOM_LEFT_CORNER_RADIUS: 'bottomLeftRadius',
 	RECTANGLE_BOTTOM_RIGHT_CORNER_RADIUS: 'bottomRightRadius',
 	RECTANGLE_CORNER_RADIUS: 'cornerRadius',
-	RECTANGLE_STROKE_WEIGHT: 'strokeWeight',
-	RECTANGLE_STROKE_TOP_WEIGHT: 'strokeTopWeight',
-	RECTANGLE_STROKE_BOTTOM_WEIGHT: 'strokeBottomWeight',
-	RECTANGLE_STROKE_LEFT_WEIGHT: 'strokeLeftWeight',
-	RECTANGLE_STROKE_RIGHT_WEIGHT: 'strokeRightWeight',
-	RECTANGLE_OPACITY: 'opacity',
-	RECTANGLE_FILLS: 'fills',
-	RECTANGLE_STROKES: 'strokes',
 
 	// Frame properties
-	FRAME_OPACITY: 'opacity',
-	FRAME_FILLS: 'fills',
-	FRAME_STROKES: 'strokes',
-	FRAME_STROKE_WEIGHT: 'strokeWeight',
-	FRAME_STROKE_TOP_WEIGHT: 'strokeTopWeight',
-	FRAME_STROKE_BOTTOM_WEIGHT: 'strokeBottomWeight',
-	FRAME_STROKE_LEFT_WEIGHT: 'strokeLeftWeight',
-	FRAME_STROKE_RIGHT_WEIGHT: 'strokeRightWeight',
+	OPACITY: 'opacity',
+	BORDER_STROKE_WEIGHT: 'strokeWeight',
+	BORDER_TOP_WEIGHT: 'strokeTopWeight',
+	BORDER_BOTTOM_WEIGHT: 'strokeBottomWeight',
+	BORDER_LEFT_WEIGHT: 'strokeLeftWeight',
+	BORDER_RIGHT_WEIGHT: 'strokeRightWeight',
+
+	STACK_PADDING_TOP: 'paddingTop',
+	STACK_PADDING_RIGHT: 'paddingRight',
+	STACK_PADDING_BOTTOM: 'paddingBottom',
+	STACK_PADDING_LEFT: 'paddingLeft',
+	STACK_SPACING: 'itemSpacing',
 
 	// Text properties
 	TEXT_FONT_FAMILY: 'fontFamily',
@@ -178,18 +174,6 @@ const variableConsumptionMapToProperty: { [key: string]: string } = {
 	TEXT_PARAGRAPH_SPACING: 'paragraphSpacing',
 	TEXT_PARAGRAPH_INDENT: 'paragraphIndent',
 	TEXT_OPACITY: 'opacity',
-
-	// Component properties
-	COMPONENT_OPACITY: 'opacity',
-	COMPONENT_FILLS: 'fills',
-	COMPONENT_STROKES: 'strokes',
-	COMPONENT_STROKE_WEIGHT: 'strokeWeight',
-
-	// Instance properties
-	INSTANCE_OPACITY: 'opacity',
-	INSTANCE_FILLS: 'fills',
-	INSTANCE_STROKES: 'strokes',
-	INSTANCE_STROKE_WEIGHT: 'strokeWeight',
 
 	// Add more as discovered
 }
