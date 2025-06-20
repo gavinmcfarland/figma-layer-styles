@@ -2,7 +2,7 @@
 // Has an option for overridesOnly
 // Has an option to copyPaste recursively (via children)
 
-function isObjLiteral(_obj) {
+function isObjLiteral(_obj: any) {
 	var _test = _obj
 	return typeof _obj !== 'object' || _obj === null
 		? false
@@ -16,7 +16,7 @@ function isObjLiteral(_obj) {
 			})()
 }
 
-function isObjEmpty(value) {
+function isObjEmpty(value: any) {
 	if (value && Object.keys(value).length === 0 && value.constructor === Object) {
 		return true
 	}
@@ -262,7 +262,7 @@ export function copyPaste(source: any, target: any | BaseNode, ...args: (Options
 					// obj[key] = "Mixed"; // Don't provide because cannot apply to nodes
 				} else {
 					if (!isObjLiteral(source)) {
-						obj[key] = value.get.call(source)
+						obj[key] = (value as PropertyDescriptor).get?.call(source)
 					} else {
 						obj[key] = value
 					}
@@ -360,21 +360,35 @@ export function copyPaste(source: any, target: any | BaseNode, ...args: (Options
 		// Instead of Object.assign, set properties individually
 		for (const [key, value] of Object.entries(obj)) {
 			try {
-				// Check both own properties and prototype chain
-				let descriptor = Object.getOwnPropertyDescriptor(target, key)
-				if (!descriptor) {
-					// If not found on own properties, check prototype chain
-					let proto = Object.getPrototypeOf(target)
-					while (proto) {
-						descriptor = Object.getOwnPropertyDescriptor(proto, key)
-						if (descriptor) break
-						proto = Object.getPrototypeOf(proto)
+				// Check if this is a variable reference
+				if (value && typeof value === 'object' && (value as any).type === 'VARIABLE' && (value as any).id) {
+					// This is a variable reference, bind it to the target node
+					try {
+						const variable = figma.variables.getVariableById((value as any).id)
+						if (variable) {
+							// Bind the variable to the target node's property
+							;(target as any).setBoundVariable(key, variable)
+						}
+					} catch (err) {
+						console.log(`Could not bind variable ${(value as any).id} to property ${key}:`, err)
 					}
-				}
+				} else {
+					// Check both own properties and prototype chain
+					let descriptor = Object.getOwnPropertyDescriptor(target, key)
+					if (!descriptor) {
+						// If not found on own properties, check prototype chain
+						let proto = Object.getPrototypeOf(target)
+						while (proto) {
+							descriptor = Object.getOwnPropertyDescriptor(proto, key)
+							if (descriptor) break
+							proto = Object.getPrototypeOf(proto)
+						}
+					}
 
-				// If we found a descriptor and it's writable, set the property
-				if (descriptor && descriptor.writable !== false) {
-					target[key] = value
+					// If we found a descriptor and it's writable, set the property
+					if (descriptor && descriptor.writable !== false) {
+						target[key] = value
+					}
 				}
 			} catch (err) {
 				console.log(`Could not set property ${key}:`, err)
