@@ -142,6 +142,101 @@ const mixedProps = {
 	cornerRadius: ['topleftCornerRadius', 'topRightCornerRadius', 'bottomLeftCornerRadius', 'bottomRightCornerRadius'],
 }
 
+// Mapping from variableConsumptionMap keys to property names
+const variableConsumptionMapToProperty: { [key: string]: string } = {
+	// Rectangle properties
+	RECTANGLE_TOP_LEFT_CORNER_RADIUS: 'topLeftRadius',
+	RECTANGLE_TOP_RIGHT_CORNER_RADIUS: 'topRightRadius',
+	RECTANGLE_BOTTOM_LEFT_CORNER_RADIUS: 'bottomLeftRadius',
+	RECTANGLE_BOTTOM_RIGHT_CORNER_RADIUS: 'bottomRightRadius',
+	RECTANGLE_CORNER_RADIUS: 'cornerRadius',
+	RECTANGLE_STROKE_WEIGHT: 'strokeWeight',
+	RECTANGLE_STROKE_TOP_WEIGHT: 'strokeTopWeight',
+	RECTANGLE_STROKE_BOTTOM_WEIGHT: 'strokeBottomWeight',
+	RECTANGLE_STROKE_LEFT_WEIGHT: 'strokeLeftWeight',
+	RECTANGLE_STROKE_RIGHT_WEIGHT: 'strokeRightWeight',
+	RECTANGLE_OPACITY: 'opacity',
+	RECTANGLE_FILLS: 'fills',
+	RECTANGLE_STROKES: 'strokes',
+
+	// Frame properties
+	FRAME_OPACITY: 'opacity',
+	FRAME_FILLS: 'fills',
+	FRAME_STROKES: 'strokes',
+	FRAME_STROKE_WEIGHT: 'strokeWeight',
+	FRAME_STROKE_TOP_WEIGHT: 'strokeTopWeight',
+	FRAME_STROKE_BOTTOM_WEIGHT: 'strokeBottomWeight',
+	FRAME_STROKE_LEFT_WEIGHT: 'strokeLeftWeight',
+	FRAME_STROKE_RIGHT_WEIGHT: 'strokeRightWeight',
+
+	// Text properties
+	TEXT_FONT_FAMILY: 'fontFamily',
+	TEXT_FONT_STYLE: 'fontStyle',
+	TEXT_FONT_WEIGHT: 'fontWeight',
+	TEXT_LINE_HEIGHT: 'lineHeight',
+	TEXT_LETTER_SPACING: 'letterSpacing',
+	TEXT_PARAGRAPH_SPACING: 'paragraphSpacing',
+	TEXT_PARAGRAPH_INDENT: 'paragraphIndent',
+	TEXT_OPACITY: 'opacity',
+
+	// Component properties
+	COMPONENT_OPACITY: 'opacity',
+	COMPONENT_FILLS: 'fills',
+	COMPONENT_STROKES: 'strokes',
+	COMPONENT_STROKE_WEIGHT: 'strokeWeight',
+
+	// Instance properties
+	INSTANCE_OPACITY: 'opacity',
+	INSTANCE_FILLS: 'fills',
+	INSTANCE_STROKES: 'strokes',
+	INSTANCE_STROKE_WEIGHT: 'strokeWeight',
+
+	// Add more as discovered
+}
+
+// Type for variable consumption map data
+type VariableConsumptionData = {
+	type: number
+	resolvedType: number
+	value: string
+}
+
+// Helper function to bind variables from variableConsumptionMap
+/**
+ * Binds variables from a source node's variableConsumptionMap to a target node
+ * using the setBoundVariable method. This handles properties like cornerRadius
+ * that store variable references in variableConsumptionMap instead of boundVariables.
+ *
+ * @param source - The source node containing variableConsumptionMap
+ * @param target - The target node to bind variables to
+ */
+function bindVariablesFromConsumptionMap(source: any, target: any) {
+	if (!source.variableConsumptionMap || !target || typeof target.setBoundVariable !== 'function') {
+		return
+	}
+
+	for (const [consumptionKey, variableData] of Object.entries(source.variableConsumptionMap)) {
+		const propertyName = variableConsumptionMapToProperty[consumptionKey]
+		if (
+			propertyName &&
+			variableData &&
+			typeof variableData === 'object' &&
+			(variableData as VariableConsumptionData).value
+		) {
+			const variableId = (variableData as VariableConsumptionData).value
+			try {
+				const variable = figma.variables.getVariableById(variableId)
+				if (variable) {
+					// Bind the variable to the target node's property
+					target.setBoundVariable(propertyName, variable)
+				}
+			} catch (err) {
+				console.log(`Could not bind variable ${variableId} to property ${propertyName}:`, err)
+			}
+		}
+	}
+}
+
 // function applyMixedValues(node, prop) {
 
 //     const obj = {};
@@ -177,6 +272,12 @@ type Callback = (prop: string) => void
  * @param target - The node or object you want to paste to
  * @param args - Either options or a callback.
  * @returns A node or object with the properties copied over
+ *
+ * This function now supports:
+ * - Copying regular properties between nodes
+ * - Binding variables from boundVariables property
+ * - Binding variables from variableConsumptionMap (for properties like cornerRadius)
+ * - Copying to empty objects for serialization
  */
 
 // FIXME: When an empty objet is provided, copy over all properties including width and height
@@ -326,6 +427,18 @@ export function copyPaste(source: any, target: any | BaseNode, ...args: (Options
 		}
 	}
 
+	// Handle variableConsumptionMap when copying to an empty object
+	if (targetIsEmpty && !isObjLiteral(source) && source.variableConsumptionMap) {
+		obj.variableConsumptionMap = {}
+		for (const [consumptionKey, variableData] of Object.entries(source.variableConsumptionMap)) {
+			const propertyName = variableConsumptionMapToProperty[consumptionKey]
+			if (propertyName && variableData && typeof variableData === 'object' && (variableData as any).value) {
+				// Store the variable reference in the object
+				obj.variableConsumptionMap[consumptionKey] = variableData
+			}
+		}
+	}
+
 	// Only applicable to objects because these properties cannot be set on nodes
 	if (targetIsEmpty) {
 		if (
@@ -393,6 +506,20 @@ export function copyPaste(source: any, target: any | BaseNode, ...args: (Options
 			} catch (err) {
 				console.log(`Could not set property ${key}:`, err)
 			}
+		}
+	}
+
+	// Handle variableConsumptionMap for properties like cornerRadius
+	if (
+		!isObjLiteral(source) &&
+		source.variableConsumptionMap &&
+		target &&
+		typeof target.setBoundVariable === 'function'
+	) {
+		try {
+			bindVariablesFromConsumptionMap(source, target)
+		} catch (err) {
+			console.log('Could not process variableConsumptionMap:', err)
 		}
 	}
 
