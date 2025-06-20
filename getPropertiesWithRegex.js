@@ -176,19 +176,19 @@ var string = `interface BaseNodeMixin {
     ReactionMixin {}`
 
 function getPropertiesWithRegex(string) {
-    var regex = /^\s+(?:readonly\s)?(\w+):/gmi
-    var regexReadOnly = /^\s+(?:readonly\s)(\w+):/gmi
-    // var result = string.match(regex)
-    // var result = String.prototype.matchAll(regex)
-    var result = []
-    // console.log(result[1])
-    var array
+	var regex = /^\s+(?:readonly\s)?(\w+):/gmi
+	var regexReadOnly = /^\s+(?:readonly\s)(\w+):/gmi
+	// var result = string.match(regex)
+	// var result = String.prototype.matchAll(regex)
+	var result = []
+	// console.log(result[1])
+	var array
 
-    while ((array = regexReadOnly.exec(string)) !== null) {
-        result.push(array[1])
-    }
-    console.log(result)
-    return result
+	while ((array = regexReadOnly.exec(string)) !== null) {
+		result.push(array[1])
+	}
+	// console.log(result)
+	return result
 }
 
 getPropertiesWithRegex(string)

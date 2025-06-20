@@ -19,9 +19,9 @@
 	}
 
 	function handleClickOutside() {
-		console.log('Click outside detected, clearing selection')
+		// console.log('Click outside detected, clearing selection')
 		selectedStyles.set([])
-		console.log('Selection cleared, current store value:', $selectedStyles)
+		// console.log('Selection cleared, current store value:', $selectedStyles)
 	}
 
 	var styles = $state([])
@@ -66,15 +66,22 @@
 
 <div
 	class="app-container"
+	role="button"
 	onclick={(e) => {
 		// If click is on the main container (not on styles), clear selection
-		console.log('clicking container')
+		// console.log('clicking container')
 		// if (e.target === e.currentTarget) {
-		console.log('Main container clicked, clearing selection')
+		// console.log('Main container clicked, clearing selection')
 		selectedStyles.set([])
-		console.log('Selection cleared from main container, current store value:', $selectedStyles)
+		// console.log('Selection cleared from main container, current store value:', $selectedStyles)
 		// }
 	}}
+	onkeydown={(e) => {
+		if (e.key === 'Enter' || e.key === ' ') {
+			selectedStyles.set([])
+		}
+	}}
+	tabindex="0"
 >
 	{#if styles.length > 0}
 		<div class="styles" bind:this={stylesContainer}>

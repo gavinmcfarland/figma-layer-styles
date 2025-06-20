@@ -245,7 +245,7 @@
 		if (event) {
 			event.stopPropagation()
 		}
-		console.log('renameStyle', id, name)
+		// console.log('renameStyle', id, name)
 		parent.postMessage(
 			{
 				pluginMessage: {
@@ -408,12 +408,12 @@
 		if ($selectedStyles && $selectedStyles.includes(style.id)) {
 			if (listItem) {
 				listItem.classList.add('multi-selected')
-				console.log('Added multi-selected class to:', style.name)
+				// console.log('Added multi-selected class to:', style.name)
 			}
 		} else {
 			if (listItem) {
 				listItem.classList.remove('multi-selected')
-				console.log('Removed multi-selected class from:', style.name)
+				// console.log('Removed multi-selected class from:', style.name)
 			}
 		}
 	})

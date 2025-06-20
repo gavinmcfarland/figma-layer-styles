@@ -98,7 +98,7 @@ async function addLayerStyle(node: SceneNode) {
 		var layerStyle = layerStyles[i]
 
 		if (layerStyle.id === node.id) {
-			console.log('Layer style already exists')
+			// console.log('Layer style already exists')
 			figma.notify('Layer style already exists')
 			return
 		}
@@ -156,7 +156,7 @@ function getLayerStyles(id?: string) {
 }
 
 function updateInstances(selection: SceneNode[], id?: string) {
-	console.log('updateInstances', selection, id)
+	// console.log('updateInstances', selection, id)
 	// Find nodes that should be updated with new properties
 	var nodes: SceneNode[] = []
 
@@ -197,11 +197,11 @@ function updateInstances(selection: SceneNode[], id?: string) {
 				layerStyle = layerStyleData.node
 				copyPasteStyle(layerStyle, node)
 			} else {
-				console.log('Layer style not found for styleId:', styleId)
+				// console.log('Layer style not found for styleId:', styleId)
 				// Remove the invalid styleId from the node
 				node.setPluginData('styleId', '')
 			}
-			console.log("Original node can't be found")
+			// console.log("Original node can't be found")
 		}
 	}
 
@@ -215,7 +215,7 @@ function updateInstances(selection: SceneNode[], id?: string) {
 
 export function clearLayerStyle() {
 	figma.root.setPluginData('styles', '')
-	console.log('Styles cleared')
+	// console.log('Styles cleared')
 	figma.closePlugin()
 }
 
@@ -272,7 +272,7 @@ function applyLayerStyle(selection: SceneNode[], styleId: string) {
 					copyPasteStyle(layerStyle, node)
 				} else {
 					copyPasteStyle(layerStyle, node)
-					console.log("Original node can't be found")
+					// console.log("Original node can't be found")
 				}
 			}
 			figma.notify('Layer style applied')
