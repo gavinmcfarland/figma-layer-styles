@@ -66,7 +66,6 @@
 
 <div
 	class="app-container"
-	role="button"
 	onclick={(e) => {
 		// If click is on the main container (not on styles), clear selection
 		// console.log('clicking container')

@@ -85,7 +85,7 @@ function getInstances(styleId?: string) {
 function addInstance(styleId: string, nodeId: string) {
 	var instances = getInstances(styleId)
 
-	instances.push(nodeId)
+	instances.push(nodeId as any)
 
 	figma.root.setPluginData('layerStyle' + styleId, JSON.stringify(instances))
 }
@@ -342,7 +342,7 @@ function postStyleList() {
 
 function debounce(func: Function, wait: number, immediate?: boolean) {
 	var timeout: any
-	return function () {
+	return function (this: any) {
 		var context = this,
 			args = arguments
 		var later = function () {
@@ -360,9 +360,10 @@ function debounce(func: Function, wait: number, immediate?: boolean) {
 // TODO: Need to be careful if something happens to node while it's being watched, for example if it's deleted
 
 // The node being edited
-var nodeBeingEdited = null
+var nodeBeingEdited: SceneNode | null = null
+var previewIntervalId: number | null = null
 
-function checkNodeBeingEdited(selection) {
+function checkNodeBeingEdited(selection: SceneNode[]) {
 	if (selection && selection.length === 1) {
 		var node = selection[0]
 		if (node.id === node.getPluginData('styleId')) {
@@ -371,13 +372,20 @@ function checkNodeBeingEdited(selection) {
 	}
 }
 
-function updatePreview(nodeBeingEdited) {
+function updatePreview(nodeBeingEdited: SceneNode) {
 	if (nodeBeingEdited) {
 		var layerStyleId = nodeBeingEdited.getPluginData('styleId')
 		var properties = copyPasteStyle(nodeBeingEdited)
 
-		updateLayerStyle(layerStyleId, null, properties)
+		updateLayerStyle(layerStyleId, undefined, properties)
 		postStyleList()
+	}
+}
+
+function clearPreviewInterval() {
+	if (previewIntervalId !== null) {
+		clearInterval(previewIntervalId)
+		previewIntervalId = null
 	}
 }
 
@@ -385,6 +393,9 @@ export default function () {
 	// clearLayerStyle()
 
 	figma.on('selectionchange', () => {
+		// Clear any existing preview interval
+		clearPreviewInterval()
+
 		// Post selection to UI and set current node being edited
 
 		var node = figma.currentPage.selection[0]
@@ -405,13 +416,14 @@ export default function () {
 		})
 
 		if (nodeBeingEdited) {
-			setInterval(() => {
-				updatePreview(nodeBeingEdited)
+			previewIntervalId = setInterval(() => {
+				updatePreview(nodeBeingEdited!)
 			}, 600)
 		}
 		// If user unselects then change node being edited to null
 		if (figma.currentPage.selection.length === 0) {
 			nodeBeingEdited = null
+			clearPreviewInterval()
 		}
 	})
 
@@ -445,37 +457,37 @@ export default function () {
 			if (msg.type === 'update-style') {
 				var node = figma.currentPage.selection[0]
 				var properties = copyPasteStyle(node)
-				updateLayerStyle(msg.id, null, properties, node.id)
+				updateLayerStyle(msg.id, undefined, properties, node.id)
 				figma.currentPage.selection[0].setPluginData('styleId', node.id)
 				figma.commitUndo()
 				postStyleList()
 			}
 
 			if (msg.type === 'edit-layer-style') {
-				var node = figma.getNodeById(msg.id)
-				if (!nodeRemovedByUser(node)) {
-					figma.viewport.scrollAndZoomIntoView([node])
+				var foundNode: SceneNode | null = figma.getNodeById(msg.id) as SceneNode | null
+				if (foundNode && !nodeRemovedByUser(foundNode)) {
+					figma.viewport.scrollAndZoomIntoView([foundNode])
 					figma.viewport.zoom = 0.25
-					figma.currentPage = getPageNode(node)
-					figma.currentPage.selection = [node]
+					figma.currentPage = getPageNode(foundNode)
+					figma.currentPage.selection = [foundNode]
 				} else {
 					// If orginal node can't be found anymore
-					node = figma.createFrame()
-					var newStyleId = node.id
+					var newNode = figma.createFrame()
+					var newStyleId = newNode.id
 					var properties = getLayerStyles(msg.id)
 
 					if (properties) {
-						copyPasteStyle(properties.node, node)
-						centerInViewport(node)
-						node.name = `${properties.name}`
-						figma.viewport.scrollAndZoomIntoView([node])
+						copyPasteStyle(properties.node, newNode)
+						centerInViewport(newNode)
+						newNode.name = `${properties.name}`
+						figma.viewport.scrollAndZoomIntoView([newNode])
 						figma.viewport.zoom = 0.25
 						// figma.viewport.scrollAndZoomIntoView([node])
 
 						// Set as the new master layer style
-						node.setPluginData('styleId', node.id)
+						newNode.setPluginData('styleId', newNode.id)
 
-						updateLayerStyle(msg.id, null, null, node.id)
+						updateLayerStyle(msg.id, undefined, undefined, newNode.id)
 
 						// Update instances with new style id
 						var instances = getInstances(msg.id)
@@ -484,7 +496,7 @@ export default function () {
 							node.setPluginData('styleId', newStyleId)
 						})
 
-						figma.currentPage.selection = [node]
+						figma.currentPage.selection = [newNode]
 
 						// Commit undo after creating new node and updating instances
 						figma.commitUndo()
@@ -496,7 +508,7 @@ export default function () {
 			}
 
 			if (msg.type === 'apply-style') {
-				applyLayerStyle(figma.currentPage.selection, msg.id)
+				applyLayerStyle([...figma.currentPage.selection], msg.id)
 			}
 
 			if (msg.type === 'remove-style') {
@@ -510,13 +522,13 @@ export default function () {
 	}
 
 	if (figma.command === 'createStyles') {
-		createStyles(figma.currentPage.selection)
+		createStyles([...figma.currentPage.selection])
 
 		figma.closePlugin()
 	}
 
 	if (figma.command === 'updateStyles') {
-		updateInstances(figma.currentPage.selection)
+		updateInstances([...figma.currentPage.selection])
 		figma.closePlugin()
 	}
 
